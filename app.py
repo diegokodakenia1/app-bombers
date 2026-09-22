@@ -190,7 +190,6 @@ def verificar_cliente():
 # ------------------------------------------------------------------------------
 def sincronizar_desde_supabase():
     if not supabase:
-        st.warning("DEBUG: Objeto supabase no disponible.")
         return
 
     # 1. Sincronizar PDFs de Temario
@@ -238,10 +237,17 @@ def sincronizar_desde_supabase():
                 rutinas_nube = json.loads(res_bytes.decode("utf-8"))
                 if isinstance(rutinas_nube, dict):
                     st.session_state.mis_rutinas.update(rutinas_nube)
-                    st.success("DEBUG: Rutinas descargadas de Supabase con éxito.")
         except Exception as e:
-            st.error(f"DEBUG: No se pudieron descargar las rutinas de la nube ({e}). Se cargan las por defecto.")
-            pass
+            # Si el archivo no existe en la nube, lo subimos automáticamente ahora mismo para crearlo
+            try:
+                json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/mis_rutinas.json",
+                    file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
             
         guardar_rutinas_nube()
 
