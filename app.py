@@ -30,18 +30,16 @@ RUTINAS_POR_DEFECTO = {
     "Lower (Fuerza / Salto / Opos)": ["Sentadilla trasera con barra", "Salto vertical con contramovimiento", "Cargadas de potencia (Power Clean)", "Prensa de piernas 45º", "Plancha abdominal isométrica"]
 }
 
-try:
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-except Exception:
-    SUPABASE_URL = "https://gxrdfdckjfixuugupygg.supabase.co"
-    SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cmRmZGNramZpeHV1Z3VweWdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDIzNzAsImV4cCI6MjEwNDAxODM3MH0.4dS7zNi877FhZq_gOtVxJUKc-KTTpi4OFqjXipDs9tA"
+# Lectura directa y estricta de secretos (sin respaldos falsos)
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 @st.cache_resource
 def init_supabase():
     try:
         return create_client(SUPABASE_URL, SUPABASE_KEY)
-    except Exception:
+    except Exception as e:
+        st.error(f"Error al conectar con Supabase: {e}")
         return None
 
 supabase = init_supabase()
