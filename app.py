@@ -565,7 +565,7 @@ elif opcion == "📅 Plan de Estudio Personalizado":
         )
 
     if st.button("🚀 Generar Plan Estratégico"):
-        if verificar_cliente():
+        if client is not None:
             if not dias_estudio:
                 st.warning("Selecciona al menos un día de estudio en la semana.")
             else:
