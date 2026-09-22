@@ -139,6 +139,9 @@ def guardar_rutinas_nube():
 
 def inicializar_estados():
     sincronizar_desde_supabase()
+    
+    if "mis_rutinas" not in st.session_state:
+        st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
     if "historico" not in st.session_state:
         st.session_state.historico = pd.read_csv(CSV_SIMULACROS).to_dict("records") if os.path.exists(CSV_SIMULACROS) else []
     if "historico_test_temas" not in st.session_state:
@@ -147,6 +150,8 @@ def inicializar_estados():
         st.session_state.banco_fallos = pd.read_csv(CSV_FALLOS_REPASO).to_dict("records") if os.path.exists(CSV_FALLOS_REPASO) else []
     if "flashcards" not in st.session_state:
         st.session_state.flashcards = pd.read_csv(CSV_FLASHCARDS).to_dict("records") if os.path.exists(CSV_FLASHCARDS) else []
+    if "historial_marcas" not in st.session_state:
+        st.session_state.historial_marcas = []
 
 inicializar_estados()
 
@@ -535,7 +540,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                         st.rerun()
 
     with t3:
-        if st.session_state.historial_marcas:
+        if st.session_state.get("historial_marcas"):
             df_marcas = pd.DataFrame(st.session_state.historial_marcas)
             ejercicio_grafico = st.selectbox("Selecciona ejercicio para ver evolución de peso:", df_marcas["Ejercicio"].unique())
             df_filtrado = df_marcas[df_marcas["Ejercicio"] == ejercicio_grafico]
