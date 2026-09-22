@@ -12,19 +12,7 @@ from google.genai.errors import APIError
 from supabase import create_client
 import pypdf
 
-# --- INICIALIZACIÓN BLINDADA DESDE SUPABASE ---
-if "mis_rutinas" not in st.session_state:
-    try:
-        # Intentamos descargar obligatoriamente de la nube al arrancar
-        res = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
-        st.session_state.mis_rutinas = json.loads(res.decode("utf-8"))
-        st.sidebar.success(f"Nube conectada: {len(st.session_state.mis_rutinas)} rutinas cargadas.")
-    except Exception as e:
-        # Si la nube está vacía o falla, empezamos con un diccionario vacío
-        st.session_state.mis_rutinas = {}
-        st.sidebar.warning("Iniciado con rutinas vacías (sin conexión previa).")
-    
-# Configuración inicial de la página
+# Configuración inicial de la página (DEBE SER LA PRIMERA LLAMADA A ST)
 st.set_page_config(
     page_title="Gestor Integral Bombers & Fitness",
     page_icon="🚒",
@@ -41,6 +29,7 @@ except Exception:
     # Respaldo automático para que funcione en tu PC sin dar error de secretos
     SUPABASE_URL = "https://gxrdfdckjfixuugupygg.supabase.co"
     SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cmRmZGNramZpeHV1Z3VweWdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDIzNzAsImV4cCI6MjEwNDAxODM3MH0.4dS7zNi877FhZq_gOtVxJUKc-KTTpi4OFqjXipDs9tA"
+
 @st.cache_resource
 def init_supabase():
     try:
@@ -48,6 +37,7 @@ def init_supabase():
     except Exception:
         return None
 
+# 1º CONECTAMOS CON SUPABASE ANTES DE NADA
 supabase = init_supabase()
 
 # Carga segura de la API Key de Gemini
@@ -190,6 +180,7 @@ def verificar_cliente():
 # ------------------------------------------------------------------------------
 def sincronizar_desde_supabase():
     if not supabase:
+        st.sidebar.error("Error: No hay conexión con Supabase.")
         return
 
     # 1. Sincronizar PDFs de Temario
@@ -230,26 +221,19 @@ def sincronizar_desde_supabase():
 
     # 3. Sincronizar Rutinas y Marcas de Entrenamiento
     if "mis_rutinas" not in st.session_state:
-        st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
         try:
             res_bytes = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
-            if res_bytes:
-                rutinas_nube = json.loads(res_bytes.decode("utf-8"))
-                if isinstance(rutinas_nube, dict):
-                    st.session_state.mis_rutinas.update(rutinas_nube)
+            rutinas_nube = json.loads(res_bytes.decode("utf-8"))
+            if isinstance(rutinas_nube, dict) and rutinas_nube:
+                st.session_state.mis_rutinas = rutinas_nube
+                st.sidebar.success(f"Nube conectada: {len(st.session_state.mis_rutinas)} rutinas cargadas.")
+            else:
+                raise ValueError("Archivo vacío")
         except Exception as e:
-            # Si el archivo no existe en la nube, lo subimos automáticamente ahora mismo para crearlo
-            try:
-                json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
-                supabase.storage.from_("temarios").upload(
-                    path="datos/mis_rutinas.json",
-                    file=json_bytes,
-                    file_options={"content-type": "application/json", "upsert": "true"}
-                )
-            except Exception:
-                pass
-            
-        guardar_rutinas_nube()
+            # Si falla (no existe en la nube), cargamos las por defecto y las subimos
+            st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
+            st.sidebar.info("Cargadas rutinas por defecto. Sincronizando con la nube...")
+            guardar_rutinas_nube()
 
     if "historial_marcas" not in st.session_state:
         st.session_state.historial_marcas = []
@@ -290,7 +274,6 @@ def guardar_rutinas_nube():
                 file=json_bytes,
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
-            st.success("¡Rutinas guardadas en la nube correctamente!")
         except Exception as e:
             st.error(f"ERROR AL GUARDAR RUTINAS EN NUBE: {e}")
 
@@ -309,7 +292,7 @@ def guardar_plan_nube():
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
         except Exception as e:
-            st.error(f"Error al guardar plan en la nube: {e}")
+            pass
 
 def guardar_marcas_nube():
     if supabase and "historial_marcas" in st.session_state:
@@ -321,7 +304,7 @@ def guardar_marcas_nube():
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
         except Exception as e:
-            st.error(f"Error al guardar marcas en la nube: {e}")
+            pass
 
 def inicializar_estados():
     sincronizar_desde_supabase()
@@ -336,6 +319,13 @@ def inicializar_estados():
         st.session_state.flashcards = pd.read_csv(CSV_FLASHCARDS).to_dict("records") if os.path.exists(CSV_FLASHCARDS) else []
 
 inicializar_estados()
+
+# Botón de emergencia para forzar la sincronización en la barra lateral
+if st.sidebar.button("🔄 Sincronizar con Nube"):
+    if "mis_rutinas" in st.session_state:
+        del st.session_state.mis_rutinas
+    sincronizar_desde_supabase()
+    st.rerun()
 
 def guardar_simulacros_disco():
     if st.session_state.historico:
