@@ -132,8 +132,17 @@ def guardar_rutinas_nube():
                 file=json_bytes,
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
-        except Exception as e:
-            pass
+        except Exception:
+            try:
+                # Si falla porque el archivo ya existe, usamos update
+                json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
+                supabase.storage.from_("temarios").update(
+                    path="datos/mis_rutinas.json",
+                    file=json_bytes,
+                    file_options={"content-type": "application/json"}
+                )
+            except Exception as e:
+                pass
 
 def inicializar_estados():
     sincronizar_desde_supabase()
