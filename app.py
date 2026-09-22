@@ -190,18 +190,17 @@ def verificar_cliente():
 # ------------------------------------------------------------------------------
 def sincronizar_desde_supabase():
     if not supabase:
+        st.warning("DEBUG: Objeto supabase no disponible.")
         return
 
-    # 1. Sincronizar PDFs de Temario (Leyendo directo del bucket de Supabase)
+    # 1. Sincronizar PDFs de Temario
     if "textos_pdfs_temario" not in st.session_state:
         st.session_state.textos_pdfs_temario = {}
     
     try:
-        # Listamos los archivos dentro del bucket en la nube (sin carpeta física local)
         archivos_nube = supabase.storage.from_("temarios").list()
         for archivo in archivos_nube:
             nombre = archivo.get("name")
-            # Buscamos los PDFs que estén dentro de la ruta o que empiecen por temario
             if nombre and nombre.endswith(".pdf") and nombre not in st.session_state.textos_pdfs_temario:
                 res_bytes = supabase.storage.from_("temarios").download(nombre)
                 if res_bytes:
@@ -210,7 +209,7 @@ def sincronizar_desde_supabase():
                     if texto.strip():
                         st.session_state.textos_pdfs_temario[nombre] = texto
     except Exception as e:
-        print(f"Error cargando PDFs temario: {e}")
+        pass
 
     # 2. Sincronizar PDFs de Exámenes Oficiales
     if "textos_pdfs_oficiales" not in st.session_state:
@@ -220,7 +219,6 @@ def sincronizar_desde_supabase():
         archivos_of = supabase.storage.from_("temarios").list()
         for archivo in archivos_of:
             nombre = archivo.get("name")
-            # Si tienes una convención de nombres (ej: empieza por oficial o examen)
             if nombre and nombre.endswith(".pdf") and ("oficial" in nombre.lower() or "examen" in nombre.lower()) and nombre not in st.session_state.textos_pdfs_oficiales:
                 res_bytes = supabase.storage.from_("temarios").download(nombre)
                 if res_bytes:
@@ -229,7 +227,7 @@ def sincronizar_desde_supabase():
                     if texto.strip():
                         st.session_state.textos_pdfs_oficiales[nombre] = texto
     except Exception as e:
-        print(f"Error cargando PDFs oficiales: {e}")
+        pass
 
     # 3. Sincronizar Rutinas y Marcas de Entrenamiento
     if "mis_rutinas" not in st.session_state:
@@ -240,7 +238,9 @@ def sincronizar_desde_supabase():
                 rutinas_nube = json.loads(res_bytes.decode("utf-8"))
                 if isinstance(rutinas_nube, dict):
                     st.session_state.mis_rutinas.update(rutinas_nube)
-        except Exception:
+                    st.success("DEBUG: Rutinas descargadas de Supabase con éxito.")
+        except Exception as e:
+            st.error(f"DEBUG: No se pudieron descargar las rutinas de la nube ({e}). Se cargan las por defecto.")
             pass
             
         guardar_rutinas_nube()
@@ -278,28 +278,15 @@ def sincronizar_desde_supabase():
 def guardar_rutinas_nube():
     if supabase and "mis_rutinas" in st.session_state:
         try:
-            # --- CHIVATO DE VISUALIZACIÓN ---
-            st.warning(f"DEBUG MÓVIL - Contenido a subir: {list(st.session_state.mis_rutinas.keys())}")
-            
             json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
-            
-            supabase.storage.from_("temarios").update(
+            supabase.storage.from_("temarios").upload(
                 path="datos/mis_rutinas.json",
                 file=json_bytes,
-                file_options={"content-type": "application/json"}
+                file_options={"content-type": "application/json", "upsert": "true"}
             )
-            st.success("¡Rutinas sincronizadas con la nube OK!")
+            st.success("¡Rutinas guardadas en la nube correctamente!")
         except Exception as e:
-            try:
-                supabase.storage.from_("temarios").upload(
-                    path="datos/mis_rutinas.json",
-                    file=json_bytes,
-                    file_options={"content-type": "application/json"}
-                )
-                st.success("¡Rutinas subidas a la nube por primera vez OK!")
-            except Exception as e2:
-                st.error(f"ERROR REAL EN NUBE: {e2}")
-
+            st.error(f"ERROR AL GUARDAR RUTINAS EN NUBE: {e}")
 
 def guardar_plan_nube():
     if supabase and "plan_estudio_json" in st.session_state:
@@ -317,7 +304,6 @@ def guardar_plan_nube():
             )
         except Exception as e:
             st.error(f"Error al guardar plan en la nube: {e}")
-
 
 def guardar_marcas_nube():
     if supabase and "historial_marcas" in st.session_state:
