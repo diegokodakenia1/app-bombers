@@ -12,7 +12,7 @@ from google.genai.errors import APIError
 from supabase import create_client
 import pypdf
 
-# Configuración inicial de la página (DEBE SER LA PRIMERA LLAMADA A ST)
+# Configuración inicial de la página (DEBE SER LO PRIMERO)
 st.set_page_config(
     page_title="Gestor Integral Bombers & Fitness",
     page_icon="🚒",
@@ -20,13 +20,20 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# CONFIGURACIÓN DE SUPABASE (ROBUSTA PARA LOCAL Y NUBE)
+# CONFIGURACIÓN DE SUPABASE Y RUTINAS POR DEFECTO
 # ==============================================================================
+RUTINAS_POR_DEFECTO = {
+    "Push (Empuje)": ["Press de banca plano con barra", "Press de banca inclinado con barra", "Press militar con barra", "Fondos en paralelas (Dips)", "Elevaciones laterales con mancuernas", "Press francés con barra Z", "Extensiones de tríceps en polea"],
+    "Pull (Tirón)": ["Dominadas pronas lastradas", "Remo con barra", "Jalón al pecho en polea", "Remo en polea baja (Tirón horizontal)", "Face pull", "Curl de bíceps con barra", "Curl con mancuernas tipo martillo"],
+    "Pierna (Tren Inferior)": ["Sentadilla trasera con barra", "Sentadilla frontal", "Prensa de piernas 45º", "Peso muerto rumano", "Zancadas con mancuernas (Lunges)", "Curl de isquios en máquina", "Elevación de talones en máquina (Gemelos)"],
+    "Upper (Tren Superior)": ["Press de banca plano con barra", "Dominadas libres", "Press militar con mancuernas", "Remo con mancuerna a una mano", "Dominadas lastradas supinas"],
+    "Lower (Fuerza / Salto / Opos)": ["Sentadilla trasera con barra", "Salto vertical con contramovimiento", "Cargadas de potencia (Power Clean)", "Prensa de piernas 45º", "Plancha abdominal isométrica"]
+}
+
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 except Exception:
-    # Respaldo automático para que funcione en tu PC sin dar error de secretos
     SUPABASE_URL = "https://gxrdfdckjfixuugupygg.supabase.co"
     SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cmRmZGNramZpeHV1Z3VweWdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDIzNzAsImV4cCI6MjEwNDAxODM3MH0.4dS7zNi877FhZq_gOtVxJUKc-KTTpi4OFqjXipDs9tA"
 
@@ -37,10 +44,13 @@ def init_supabase():
     except Exception:
         return None
 
-# 1º CONECTAMOS CON SUPABASE ANTES DE NADA
 supabase = init_supabase()
 
-# Carga segura de la API Key de Gemini
+# Asegurarnos de que las rutinas NUNCA empiecen vacías
+if "mis_rutinas" not in st.session_state:
+    st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
+
+# Carga de la API Key de Gemini
 api_key = None
 try:
     if "GEMINI_API_KEY" in st.secrets:
@@ -66,74 +76,16 @@ CSV_TEST_TEMAS = "historial_test_temas.csv"
 CSV_FALLOS_REPASO = "banco_fallos_repaso.csv"
 CSV_FLASHCARDS = "flashcards_guardadas.csv"
 
-# Rutinas y catálogo masivo de ejercicios para Bombers y Fuerza
-RUTINAS_POR_DEFECTO = {
-    "Push (Empuje)": ["Press de banca plano con barra", "Press de banca inclinado con barra", "Press militar con barra", "Fondos en paralelas (Dips)", "Elevaciones laterales con mancuernas", "Press francés con barra Z", "Extensiones de tríceps en polea"],
-    "Pull (Tirón)": ["Dominadas pronas lastradas", "Remo con barra", "Jalón al pecho en polea", "Remo en polea baja (Tirón horizontal)", "Face pull", "Curl de bíceps con barra", "Curl con mancuernas tipo martillo"],
-    "Pierna (Tren Inferior)": ["Sentadilla trasera con barra", "Sentadilla frontal", "Prensa de piernas 45º", "Peso muerto rumano", "Zancadas con mancuernas (Lunges)", "Curl de isquios en máquina", "Elevación de talones en máquina (Gemelos)"],
-    "Upper (Tren Superior)": ["Press de banca plano con barra", "Dominadas libres", "Press militar con mancuernas", "Remo con mancuerna a una mano", "Dominadas lastradas supinas"],
-    "Lower (Fuerza / Salto / Opos)": ["Sentadilla trasera con barra", "Salto vertical con contramovimiento", "Cargadas de potencia (Power Clean)", "Prensa de piernas 45º", "Plancha abdominal isométrica"]
-}
-
 LISTA_EJERCICIOS_HEAVY = [
-    # Pecho (Pesos Libres y Máquinas)
     "Press de banca plano con barra", "Press de banca plano con mancuernas",
     "Press de banca inclinado con barra", "Press de banca inclinado con mancuernas",
-    "Press de banca inclinado en máquina Smith", "Press de banca plano en máquina Smith",
-    "Press de banca declinado en máquina Smith", "Press de pecho sentado en máquina (Convergent Chest Press)",
-    "Press de banca declinado con barra", "Aperturas en máquina (Contractor / Pec Deck)",
-    "Aperturas planas con mancuernas", "Aperturas inclinadas con mancuernas",
-    "Cruce de poleas (Chest Flyes)", "Fondos en paralelas (Dips)",
-    
-    # Espalda / Dorsales (Pesos Libres, Poleas y Máquinas)
     "Dominadas pronas lastradas", "Dominadas libres", "Dominadas supinas (chin-ups)",
-    "Dominadas neutras", "Remo con barra", "Remo con mancuerna a una mano",
-    "Remo en polea baja (Tirón horizontal)", "Remo en máquina convergente (Chest-supported Row)",
-    "Remo sentado en máquina agarre neutro", "Jalón al pecho agarre prono",
-    "Jalón al pecho agarre supino", "Jalón al pecho agarre neutro",
-    "Jalón al pecho en máquina convergente", "Pulldown en polea alta con brazos estirados",
-    "Remo en máquina T", "Remo Pendlay", "Pullover en polea alta con barra o cuerda",
-    
-    # Hombros (Pesos Libres y Máquinas)
+    "Remo con barra", "Remo con mancuerna a una mano", "Remo en polea baja (Tirón horizontal)",
     "Press militar con barra (Standing Overhead Press)", "Press militar sentado con mancuernas",
-    "Press militar en máquina sentado (Shoulder Press Machine)", "Press militar en máquina Smith",
-    "Press Arnold", "Elevaciones laterales con mancuernas", "Elevaciones laterales en polea",
-    "Elevaciones laterales en máquina", "Elevaciones frontales con disco o mancuerna",
-    "Pájaros (Elevaciones posteriores con mancuernas)", "Pájaros en máquina contractora (Reverse Pec Deck)",
-    "Face pull", "Encogimientos de hombros con barra o mancuernas (Trapecios)",
-    "Encogimientos de hombros en máquina Smith",
-    
-    # Bíceps (Pesos Libres, Poleas y Máquinas)
-    "Curl de bíceps con barra", "Curl de bíceps con barra Z",
-    "Curl con mancuernas alterno", "Curl con mancuernas tipo martillo",
-    "Curl en banco Scott con barra Z", "Curl en banco Scott en máquina",
-    "Curl en polea baja con barra", "Curl en polea baja con cuerda",
-    "Curl concentrado", "Curl de bíceps en máquina sentado",
-    
-    # Tríceps (Pesos Libres, Poleas y Máquinas)
+    "Curl de bíceps con barra", "Curl con mancuernas tipo martillo",
     "Press francés con barra Z", "Extensiones de tríceps en polea alta (Cuerda)",
-    "Extensiones de tríceps en polea alta (Barra recta)", "Press de banca con agarre cerrado",
-    "Extensiones de tríceps en máquina sentado (Triceps Extension Machine)",
-    "Extensiones de tríceps por detrás de la cabeza con mancuerna",
-    "Extensiones de tríceps tras nuca en polea baja", "Patada de tríceps con mancuerna",
-    
-    # Piernas - Cuádriceps, Glúteos e Isquios (Pesos Libres y Máquinas)
-    "Sentadilla trasera con barra (Back Squat)", "Sentadilla frontal con barra (Front Squat)",
-    "Sentadilla en máquina Smith", "Sentadilla búlgara con mancuernas",
-    "Prensa de piernas 45º", "Prensa horizontal", "Extensiones de cuádriceps en máquina",
-    "Sentadilla Sissy en máquina", "Peso muerto convencional", "Peso muerto rumano",
-    "Peso muerto sumo", "Curl de isquios tumbado en máquina", "Curl de isquios sentado en máquina",
-    "Curl de isquios de pie en máquina", "Hip thrust con barra", "Hip thrust en máquina",
-    "Patada de glúteos en polea baja", "Abductor de cadera en máquina", "Aductor de cadera en máquina",
-    "Zancadas con mancuernas (Lunges)", "Elevación de talones de pie en máquina (Gemelos)",
-    "Elevación de talones sentado en máquina (Gemelos)", "Elevaciones de talones en prensa 45º",
-    
-    # Core / Abdominales / Funcionales Oposición
-    "Plancha abdominal isométrica", "Elevación de piernas colgado en barra",
-    "Elevación de rodillas en máquina de paralelas/abdominales", "Abdominales en V (V-Ups)",
-    "Rueda abdominal (Ab Wheel Rollout)", "Giros rusos con peso (Russian Twists)",
-    "Crunch abdominal en máquina", "Salto vertical con contramovimiento",
-    "Cargadas de potencia (Power Clean)", "Clean & Jerk", "Course Navette (Simulación)"
+    "Sentadilla trasera con barra (Back Squat)", "Prensa de piernas 45º", "Peso muerto rumano",
+    "Plancha abdominal isométrica", "Elevación de piernas colgado en barra", "Salto vertical con contramovimiento"
 ]
 
 def limpiar_nombre_archivo(nombre):
@@ -160,108 +112,16 @@ def generar_con_reintento(prompt_texto, intentos=4, espera=3):
             raise e
     return None
 
-def obtener_texto_acumulado():
-    if "textos_pdfs_temario" in st.session_state and st.session_state.textos_pdfs_temario:
-        return "\n".join(st.session_state.textos_pdfs_temario.values())
-    return ""
-
-def obtener_texto_acumulado_oficiales():
-    if "textos_pdfs_oficiales" in st.session_state and st.session_state.textos_pdfs_oficiales:
-        return "\n".join(st.session_state.textos_pdfs_oficiales.values())
-    return ""
-
-def verificar_cliente():
-    if client is None:
-        st.error("⚠️ Por favor, introduce tu Gemini API Key en la barra lateral.")
-        return False
-    return True
-
-# --- SINCRONIZACIÓN Y PERSISTENCIA AUTOMÁTICA CON SUPABASE NUBE ---
-# ------------------------------------------------------------------------------
 def sincronizar_desde_supabase():
     if not supabase:
-        st.sidebar.error("Error: No hay conexión con Supabase.")
         return
-
-    # 1. Sincronizar PDFs de Temario
-    if "textos_pdfs_temario" not in st.session_state:
-        st.session_state.textos_pdfs_temario = {}
-    
+    # Intentar descargar rutinas de la nube si existen
     try:
-        archivos_nube = supabase.storage.from_("temarios").list()
-        for archivo in archivos_nube:
-            nombre = archivo.get("name")
-            if nombre and nombre.endswith(".pdf") and nombre not in st.session_state.textos_pdfs_temario:
-                res_bytes = supabase.storage.from_("temarios").download(nombre)
-                if res_bytes:
-                    lector = pypdf.PdfReader(io.BytesIO(res_bytes))
-                    texto = "".join([p.extract_text() + "\n" for p in lector.pages if p.extract_text()])
-                    if texto.strip():
-                        st.session_state.textos_pdfs_temario[nombre] = texto
-    except Exception as e:
-        pass
-
-    # 2. Sincronizar PDFs de Exámenes Oficiales
-    if "textos_pdfs_oficiales" not in st.session_state:
-        st.session_state.textos_pdfs_oficiales = {}
-        
-    try:
-        archivos_of = supabase.storage.from_("temarios").list()
-        for archivo in archivos_of:
-            nombre = archivo.get("name")
-            if nombre and nombre.endswith(".pdf") and ("oficial" in nombre.lower() or "examen" in nombre.lower()) and nombre not in st.session_state.textos_pdfs_oficiales:
-                res_bytes = supabase.storage.from_("temarios").download(nombre)
-                if res_bytes:
-                    lector = pypdf.PdfReader(io.BytesIO(res_bytes))
-                    texto = "".join([p.extract_text() + "\n" for p in lector.pages if p.extract_text()])
-                    if texto.strip():
-                        st.session_state.textos_pdfs_oficiales[nombre] = texto
-    except Exception as e:
-        pass
-
-    # 3. Sincronizar Rutinas y Marcas de Entrenamiento
-    if "mis_rutinas" not in st.session_state:
-        try:
-            res_bytes = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
+        res_bytes = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
+        if res_bytes:
             rutinas_nube = json.loads(res_bytes.decode("utf-8"))
             if isinstance(rutinas_nube, dict) and rutinas_nube:
-                st.session_state.mis_rutinas = rutinas_nube
-                st.sidebar.success(f"Nube conectada: {len(st.session_state.mis_rutinas)} rutinas cargadas.")
-            else:
-                raise ValueError("Archivo vacío")
-        except Exception as e:
-            # Si falla (no existe en la nube), cargamos las por defecto y las subimos
-            st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
-            st.sidebar.info("Cargadas rutinas por defecto. Sincronizando con la nube...")
-            guardar_rutinas_nube()
-
-    if "historial_marcas" not in st.session_state:
-        st.session_state.historial_marcas = []
-        try:
-            res_bytes = supabase.storage.from_("temarios").download("datos/historial_marcas.json")
-            if res_bytes:
-                st.session_state.historial_marcas = json.loads(res_bytes.decode("utf-8"))
-        except Exception:
-            pass
-
-    # 4. Sincronizar Plan de Estudio y Progreso
-    if "plan_estudio_json" not in st.session_state:
-        st.session_state.plan_estudio_json = None
-    if "plan_estudio_texto_raw" not in st.session_state:
-        st.session_state.plan_estudio_texto_raw = ""
-    if "progreso_estudio" not in st.session_state:
-        st.session_state.progreso_estudio = {}
-
-    try:
-        res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
-        if res_bytes:
-            datos_nube = json.loads(res_bytes.decode("utf-8"))
-            if not st.session_state.plan_estudio_json:
-                st.session_state.plan_estudio_json = datos_nube.get("plan_estudio_json")
-            if not st.session_state.plan_estudio_texto_raw:
-                st.session_state.plan_estudio_texto_raw = datos_nube.get("plan_estudio_texto_raw", "")
-            if "progreso_estudio" in datos_nube:
-                st.session_state.progreso_estudio.update(datos_nube["progreso_estudio"])
+                st.session_state.mis_rutinas.update(rutinas_nube)
     except Exception:
         pass
 
@@ -275,40 +135,10 @@ def guardar_rutinas_nube():
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
         except Exception as e:
-            st.error(f"ERROR AL GUARDAR RUTINAS EN NUBE: {e}")
-
-def guardar_plan_nube():
-    if supabase and "plan_estudio_json" in st.session_state:
-        try:
-            datos_plan = {
-                "plan_estudio_json": st.session_state.get("plan_estudio_json"),
-                "plan_estudio_texto_raw": st.session_state.get("plan_estudio_texto_raw", ""),
-                "progreso_estudio": st.session_state.get("progreso_estudio", {})
-            }
-            json_bytes = json.dumps(datos_plan).encode("utf-8")
-            supabase.storage.from_("temarios").upload(
-                path="datos/plan_estudio.json",
-                file=json_bytes,
-                file_options={"content-type": "application/json", "upsert": "true"}
-            )
-        except Exception as e:
-            pass
-
-def guardar_marcas_nube():
-    if supabase and "historial_marcas" in st.session_state:
-        try:
-            json_bytes = json.dumps(st.session_state.historial_marcas).encode("utf-8")
-            supabase.storage.from_("temarios").upload(
-                path="datos/historial_marcas.json",
-                file=json_bytes,
-                file_options={"content-type": "application/json", "upsert": "true"}
-            )
-        except Exception as e:
             pass
 
 def inicializar_estados():
     sincronizar_desde_supabase()
-    
     if "historico" not in st.session_state:
         st.session_state.historico = pd.read_csv(CSV_SIMULACROS).to_dict("records") if os.path.exists(CSV_SIMULACROS) else []
     if "historico_test_temas" not in st.session_state:
