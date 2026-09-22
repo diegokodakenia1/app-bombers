@@ -12,6 +12,18 @@ from google.genai.errors import APIError
 from supabase import create_client
 import pypdf
 
+# --- INICIALIZACIÓN BLINDADA DESDE SUPABASE ---
+if "mis_rutinas" not in st.session_state:
+    try:
+        # Intentamos descargar obligatoriamente de la nube al arrancar
+        res = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
+        st.session_state.mis_rutinas = json.loads(res.decode("utf-8"))
+        st.sidebar.success(f"Nube conectada: {len(st.session_state.mis_rutinas)} rutinas cargadas.")
+    except Exception as e:
+        # Si la nube está vacía o falla, empezamos con un diccionario vacío
+        st.session_state.mis_rutinas = {}
+        st.sidebar.warning("Iniciado con rutinas vacías (sin conexión previa).")
+    
 # Configuración inicial de la página
 st.set_page_config(
     page_title="Gestor Integral Bombers & Fitness",
@@ -20,11 +32,15 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# CONFIGURACIÓN DE SUPABASE (NUBE)
+# CONFIGURACIÓN DE SUPABASE (ROBUSTA PARA LOCAL Y NUBE)
 # ==============================================================================
-SUPABASE_URL = "https://gxrdfdckjfixuugupygg.supabase.co"
-SUPABASE_KEY = "PEGA_AQUI_TU_CLAVE_ANON_COMPLETA"
-
+try:
+    SUPABASE_URL = st.secrets["SUPABASE_URL"]
+    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
+except Exception:
+    # Respaldo automático para que funcione en tu PC sin dar error de secretos
+    SUPABASE_URL = "https://gxrdfdckjfixuugupygg.supabase.co"
+    SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cmRmZGNramZpeHV1Z3VweWdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDIzNzAsImV4cCI6MjEwNDAxODM3MH0.4dS7zNi877FhZq_gOtVxJUKc-KTTpi4OFqjXipDs9tA"
 @st.cache_resource
 def init_supabase():
     try:
@@ -170,62 +186,64 @@ def verificar_cliente():
         return False
     return True
 
-# ------------------------------------------------------------------------------
-# SINCRONIZACIÓN Y PERSISTENCIA AUTOMÁTICA CON SUPABASE NUBE
+# --- SINCRONIZACIÓN Y PERSISTENCIA AUTOMÁTICA CON SUPABASE NUBE ---
 # ------------------------------------------------------------------------------
 def sincronizar_desde_supabase():
     if not supabase:
         return
 
-    # 1. Sincronizar PDFs de Temario
+    # 1. Sincronizar PDFs de Temario (Leyendo directo del bucket de Supabase)
     if "textos_pdfs_temario" not in st.session_state:
         st.session_state.textos_pdfs_temario = {}
     
     try:
-        archivos_nube = supabase.storage.from_("temarios").list("temarios")
+        # Listamos los archivos dentro del bucket en la nube (sin carpeta física local)
+        archivos_nube = supabase.storage.from_("temarios").list()
         for archivo in archivos_nube:
             nombre = archivo.get("name")
+            # Buscamos los PDFs que estén dentro de la ruta o que empiecen por temario
             if nombre and nombre.endswith(".pdf") and nombre not in st.session_state.textos_pdfs_temario:
-                res_bytes = supabase.storage.from_("temarios").download(f"temarios/{nombre}")
+                res_bytes = supabase.storage.from_("temarios").download(nombre)
                 if res_bytes:
                     lector = pypdf.PdfReader(io.BytesIO(res_bytes))
                     texto = "".join([p.extract_text() + "\n" for p in lector.pages if p.extract_text()])
                     if texto.strip():
                         st.session_state.textos_pdfs_temario[nombre] = texto
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error cargando PDFs temario: {e}")
 
     # 2. Sincronizar PDFs de Exámenes Oficiales
     if "textos_pdfs_oficiales" not in st.session_state:
         st.session_state.textos_pdfs_oficiales = {}
         
     try:
-        archivos_of = supabase.storage.from_("temarios").list("oficiales")
+        archivos_of = supabase.storage.from_("temarios").list()
         for archivo in archivos_of:
             nombre = archivo.get("name")
-            if nombre and nombre.endswith(".pdf") and nombre not in st.session_state.textos_pdfs_oficiales:
-                res_bytes = supabase.storage.from_("temarios").download(f"oficiales/{nombre}")
+            # Si tienes una convención de nombres (ej: empieza por oficial o examen)
+            if nombre and nombre.endswith(".pdf") and ("oficial" in nombre.lower() or "examen" in nombre.lower()) and nombre not in st.session_state.textos_pdfs_oficiales:
+                res_bytes = supabase.storage.from_("temarios").download(nombre)
                 if res_bytes:
                     lector = pypdf.PdfReader(io.BytesIO(res_bytes))
                     texto = "".join([p.extract_text() + "\n" for p in lector.pages if p.extract_text()])
                     if texto.strip():
                         st.session_state.textos_pdfs_oficiales[nombre] = texto
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"Error cargando PDFs oficiales: {e}")
 
     # 3. Sincronizar Rutinas y Marcas de Entrenamiento
     if "mis_rutinas" not in st.session_state:
-        st.session_state.mis_rutinas = {}
+        st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
         try:
             res_bytes = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
             if res_bytes:
-                st.session_state.mis_rutinas = json.loads(res_bytes.decode("utf-8"))
+                rutinas_nube = json.loads(res_bytes.decode("utf-8"))
+                if isinstance(rutinas_nube, dict):
+                    st.session_state.mis_rutinas.update(rutinas_nube)
         except Exception:
             pass
             
-        if not st.session_state.mis_rutinas:
-            st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO
-            guardar_rutinas_nube()
+        guardar_rutinas_nube()
 
     if "historial_marcas" not in st.session_state:
         st.session_state.historial_marcas = []
@@ -236,17 +254,70 @@ def sincronizar_desde_supabase():
         except Exception:
             pass
 
+    # 4. Sincronizar Plan de Estudio y Progreso
+    if "plan_estudio_json" not in st.session_state:
+        st.session_state.plan_estudio_json = None
+    if "plan_estudio_texto_raw" not in st.session_state:
+        st.session_state.plan_estudio_texto_raw = ""
+    if "progreso_estudio" not in st.session_state:
+        st.session_state.progreso_estudio = {}
+
+    try:
+        res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
+        if res_bytes:
+            datos_nube = json.loads(res_bytes.decode("utf-8"))
+            if not st.session_state.plan_estudio_json:
+                st.session_state.plan_estudio_json = datos_nube.get("plan_estudio_json")
+            if not st.session_state.plan_estudio_texto_raw:
+                st.session_state.plan_estudio_texto_raw = datos_nube.get("plan_estudio_texto_raw", "")
+            if "progreso_estudio" in datos_nube:
+                st.session_state.progreso_estudio.update(datos_nube["progreso_estudio"])
+    except Exception:
+        pass
+
 def guardar_rutinas_nube():
     if supabase and "mis_rutinas" in st.session_state:
         try:
+            # --- CHIVATO DE VISUALIZACIÓN ---
+            st.warning(f"DEBUG MÓVIL - Contenido a subir: {list(st.session_state.mis_rutinas.keys())}")
+            
             json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
-            supabase.storage.from_("temarios").upload(
+            
+            supabase.storage.from_("temarios").update(
                 path="datos/mis_rutinas.json",
+                file=json_bytes,
+                file_options={"content-type": "application/json"}
+            )
+            st.success("¡Rutinas sincronizadas con la nube OK!")
+        except Exception as e:
+            try:
+                supabase.storage.from_("temarios").upload(
+                    path="datos/mis_rutinas.json",
+                    file=json_bytes,
+                    file_options={"content-type": "application/json"}
+                )
+                st.success("¡Rutinas subidas a la nube por primera vez OK!")
+            except Exception as e2:
+                st.error(f"ERROR REAL EN NUBE: {e2}")
+
+
+def guardar_plan_nube():
+    if supabase and "plan_estudio_json" in st.session_state:
+        try:
+            datos_plan = {
+                "plan_estudio_json": st.session_state.get("plan_estudio_json"),
+                "plan_estudio_texto_raw": st.session_state.get("plan_estudio_texto_raw", ""),
+                "progreso_estudio": st.session_state.get("progreso_estudio", {})
+            }
+            json_bytes = json.dumps(datos_plan).encode("utf-8")
+            supabase.storage.from_("temarios").upload(
+                path="datos/plan_estudio.json",
                 file=json_bytes,
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
-        except Exception:
-            pass
+        except Exception as e:
+            st.error(f"Error al guardar plan en la nube: {e}")
+
 
 def guardar_marcas_nube():
     if supabase and "historial_marcas" in st.session_state:
@@ -257,8 +328,8 @@ def guardar_marcas_nube():
                 file=json_bytes,
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
-        except Exception:
-            pass
+        except Exception as e:
+            st.error(f"Error al guardar marcas en la nube: {e}")
 
 def inicializar_estados():
     sincronizar_desde_supabase()
@@ -276,19 +347,60 @@ inicializar_estados()
 
 def guardar_simulacros_disco():
     if st.session_state.historico:
-        pd.DataFrame(st.session_state.historico).to_csv(CSV_SIMULACROS, index=False)
+        df = pd.DataFrame(st.session_state.historico)
+        df.to_csv(CSV_SIMULACROS, index=False)
+        # Sincronizar con Supabase
+        if supabase:
+            try:
+                json_bytes = df.to_json(orient="records").encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/historico_simulacros.json", file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
 
 def guardar_test_temas_disco():
     if st.session_state.historico_test_temas:
-        pd.DataFrame(st.session_state.historico_test_temas).to_csv(CSV_TEST_TEMAS, index=False)
+        df = pd.DataFrame(st.session_state.historico_test_temas)
+        df.to_csv(CSV_TEST_TEMAS, index=False)
+        if supabase:
+            try:
+                json_bytes = df.to_json(orient="records").encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/historico_test_temas.json", file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
 
 def guardar_banco_fallos_disco():
     if st.session_state.banco_fallos:
-        pd.DataFrame(st.session_state.banco_fallos).to_csv(CSV_FALLOS_REPASO, index=False)
+        df = pd.DataFrame(st.session_state.banco_fallos)
+        df.to_csv(CSV_FALLOS_REPASO, index=False)
+        if supabase:
+            try:
+                json_bytes = df.to_json(orient="records").encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/banco_fallos.json", file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
 
 def guardar_flashcards_disco():
     if st.session_state.flashcards:
-        pd.DataFrame(st.session_state.flashcards).to_csv(CSV_FLASHCARDS, index=False)
+        df = pd.DataFrame(st.session_state.flashcards)
+        df.to_csv(CSV_FLASHCARDS, index=False)
+        if supabase:
+            try:
+                json_bytes = df.to_json(orient="records").encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/flashcards.json", file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
 
 # ------------------------------------------------------------------------------
 # PARSER Y RENDERIZADOR DE TEST INTERACTIVO
@@ -390,7 +502,7 @@ opcion = st.sidebar.radio(
 )
 
 # ------------------------------------------------------------------------------
-# 1. BIBLIOTECA DEL TEMARIO
+# 1. BIBLIOTECA DEL TEMARIO (SINCRONIZADA CON SUPABASE)
 # ------------------------------------------------------------------------------
 if opcion == "📚 Biblioteca del Temario":
     st.header("📚 Biblioteca del Temario Oficial (Nube)")
@@ -401,31 +513,46 @@ if opcion == "📚 Biblioteca del Temario":
     if archivos_subidos and supabase:
         for archivo in archivos_subidos:
             nombre_limpio = limpiar_nombre_archivo(archivo.name)
-            if nombre_limpio not in st.session_state.textos_pdfs_temario:
-                try:
-                    supabase.storage.from_("temarios").upload(
-                        path=f"temarios/{nombre_limpio}",
-                        file=archivo.getvalue(),
-                        file_options={"content-type": "application/pdf", "upsert": "true"}
-                    )
-                    archivo.seek(0)
-                    texto = "".join([p.extract_text() + "\n" for p in pypdf.PdfReader(archivo).pages if p.extract_text()])
-                    if texto.strip():
-                        st.session_state.textos_pdfs_temario[nombre_limpio] = texto
-                        st.success(f"📄 '{nombre_limpio}' subido y guardado en la nube con éxito.")
-                except Exception as e:
-                    st.error(f"Error al subir {archivo.name}: {e}")
+            try:
+                # Subir archivo al bucket de Supabase
+                supabase.storage.from_("temarios").upload(
+                    path=f"temarios/{nombre_limpio}",
+                    file=archivo.getvalue(),
+                    file_options={"content-type": "application/pdf", "upsert": "true"}
+                )
+                
+                # Extraer texto y guardarlo en session_state para la sesión actual
+                archivo.seek(0)
+                texto = "".join([p.extract_text() + "\n" for p in pypdf.PdfReader(archivo).pages if p.extract_text()])
+                if texto.strip():
+                    st.session_state.textos_pdfs_temario[nombre_limpio] = texto
+                    st.success(f"📄 '{nombre_limpio}' subido y guardado en la nube con éxito.")
+            except Exception as e:
+                st.error(f"Error al subir {archivo.name}: {e}")
 
-    if st.session_state.textos_pdfs_temario:
+    # Sincronizar y listar directamente desde el bucket de Supabase
+    if supabase:
+        try:
+            archivos_nube = supabase.storage.from_("temarios").list("temarios")
+            nombres_nube = [f['name'] for f in archivos_nube if f['name'] != '']
+        except Exception:
+            nombres_nube = []
+    else:
+        nombres_nube = list(st.session_state.textos_pdfs_temario.keys())
+
+    if nombres_nube:
         st.subheader("📁 Documentos en la Nube")
-        for doc in list(st.session_state.textos_pdfs_temario.keys()):
+        for doc in nombres_nube:
             c1, c2 = st.columns([0.8, 0.2])
             with c1: st.write(f"• **{doc}**")
             with c2:
                 if st.button("Eliminar", key=f"del_doc_{doc}"):
-                    del st.session_state.textos_pdfs_temario[doc]
-                    try: supabase.storage.from_("temarios").remove([f"temarios/{doc}"])
-                    except Exception: pass
+                    if doc in st.session_state.textos_pdfs_temario:
+                        del st.session_state.textos_pdfs_temario[doc]
+                    try: 
+                        supabase.storage.from_("temarios").remove([f"temarios/{doc}"])
+                    except Exception: 
+                        pass
                     st.rerun()
 
 # ------------------------------------------------------------------------------
@@ -541,19 +668,45 @@ elif opcion == "🏋️‍♂️ Preparación Física":
 
     with t2:
         st.subheader("Crea tus propias rutinas de entrenamiento")
-        nombre_nueva_rutina = st.text_input("Nombre de la rutina (ej: Torso - Fuerza, Pierna Bombero):")
+        
+        nombre_nueva_rutina = st.text_input(
+            "Nombre de la rutina (ej: Torso - Fuerza, Pierna Bombero):", 
+            key="input_nombre_nueva_rutina"
+        )
         lista_ejercicios = st.multiselect(
             "Selecciona o añade los ejercicios que componen esta rutina (Catálogo Completo):",
             LISTA_EJERCICIOS_HEAVY,
-            default=["Press de banca plano con barra", "Dominadas pronas lastradas", "Sentadilla trasera con barra (Back Squat)"]
+            default=["Press de banca plano con barra", "Dominadas pronas lastradas", "Sentadilla trasera con barra (Back Squat)"],
+            key="multiselect_nueva_rutina"
         )
         
-        if st.button("➕ Guardar Nueva Rutina"):
+        if st.button("➕ Guardar Nueva Rutina", key="btn_guardar_nueva_rutina"):
             if nombre_nueva_rutina and lista_ejercicios:
+                # 1. Actualizamos la memoria local
                 st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
-                guardar_rutinas_nube()
-                st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada correctamente en la nube!")
-                st.rerun()
+                
+                try:
+                    # 2. Preparamos y subimos a Supabase con el booleano real upsert=True
+                    json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
+                    supabase.storage.from_("temarios").upload(
+                        path="datos/mis_rutinas.json",
+                        file=json_bytes,
+                        file_options={"content-type": "application/json", "upsert": True}
+                    )
+                    st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada!")
+                    st.cache_data.clear()
+                except Exception as e:
+                    # Por si acaso el upload falla porque ya existe de otra forma, probamos update
+                    try:
+                        supabase.storage.from_("temarios").update(
+                            path="datos/mis_rutinas.json",
+                            file=json_bytes,
+                            file_options={"content-type": "application/json"}
+                        )
+                        st.success(f"¡Rutina '{nombre_nueva_rutina}' actualizada en nube!")
+                        st.cache_data.clear()
+                    except Exception as e2:
+                        st.error(f"Error al guardar: {e2}")
             else:
                 st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
 
@@ -601,16 +754,56 @@ elif opcion == "📅 Plan de Estudio Personalizado":
             if not dias_estudio:
                 st.warning("Selecciona al menos un día de estudio en la semana.")
             else:
-                txt_ref = obtener_texto_acumulado()
+                # Listado oficial completo: 7 de legislación + Temas técnicos del 8 al 34
+                temario_oficial = [
+                    # Legislación (Temas 1 a 7)
+                    "Tema 01: Constitución Española, Estatut d'Autonomia, Administració catalana e instituciones",
+                    "Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario",
+                    "Tema 03: Ley 31/1995 de Prevención de Riesgos Laborales, EPIs y normativa de despliegue",
+                    "Tema 04: Ley 19/2020 de igualdad de trato y no discriminación",
+                    "Tema 05: Ley 17/2015 de igualdad efectiva de mujeres y hombres (Cap. 1, 3 y 4)",
+                    "Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil",
+                    "Tema 07: Decreto 276/2016 de funciones de guardia y sistema de comandamiento, y Decreto 12/2023 de reestructuración del departamento de Interior",
+                    
+                    # Temario Específico / Técnico (Temas 8 al 34)
+                    "Tema 08: Teoría del Fuego",
+                    "Tema 09: Física",
+                    "Tema 10: Química",
+                    "Tema 11: Electricidad",
+                    "Tema 12: Instalaciones",
+                    "Tema 13: Hidráulica y Bombas",
+                    "Tema 14: Cartografía y Orientación",
+                    "Tema 15: Construcción",
+                    "Tema 16: Intervención básica en asistencias técnicas",
+                    "Tema 17: Comunicaciones por radio",
+                    "Tema 18: Vehículos de intervención en emergencies",
+                    "Tema 19: Conducción y mecánica",
+                    "Tema 20: Equipos de protección individual en emergencias",
+                    "Tema 21: Introducción a la gestión de emergencias y Protección Civil",
+                    "Tema 22: Principis i característiques del Sistema de Comandament",
+                    "Tema 23: Prevención básica de incendios",
+                    "Tema 24: Intervención básica en incendios estructurales",
+                    "Tema 25: Intervención básica en incendios forestales",
+                    "Tema 26: Prevención incendios varios",
+                    "Tema 27: Intervención básica en riesgos NRBQ",
+                    "Tema 28: Asistencia sanitaria",
+                    "Tema 29: Intervención básica en incidentes de múltiples víctimas",
+                    "Tema 30: Intervención básica en estructuras colapsadas",
+                    "Tema 31: Intervención básica al medi natural terrestre",
+                    "Tema 32: Intervención básica en accidentes de movilidad viaria",
+                    "Tema 33: Intervención básica en rescate urbano",
+                    "Tema 34: Intervención básica en inundaciones"
+                ]
+
                 prompt = (
-                    f"Actúa como un planificador experto para oposiciones de Bombers de la Generalitat. "
-                    f"Crea un plan de estudio teórico a largo plazo (distribuido en varias semanas hasta cubrir todo el temario). "
-                    f"Dispone de {hs} horas semanales distribuidas exclusivamente en los siguientes días seleccionados: {', '.join(dias_estudio)}. "
-                    f"El plan debe cubrir estrictamente el contenido de los PDFs subidos a la biblioteca y contemplar además 7 temas adicionales de legislación. "
-                    f"NO incluyas preparación física ni entrenamientos de ningún tipo, este plan es 100% de estudio teórico. "
-                    f"Devuelve el resultado en formato JSON puro con una lista de objetos por semana. Cada objeto semana debe tener las claves: "
-                    f"'semana' (número entero), 'objetivo' (string resumido del objetivo semanal) y 'dias' (una lista de objetos, donde cada objeto tiene 'dia' (string con el nombre del día) y 'tareas' (lista de strings con los temas/tareas a realizar)).\n\n"
-                    f"Temario disponible en biblioteca:\n{txt_ref[:12000]}"
+                    f"Actúa como un planificador experto y directo para oposiciones de Bombers de la Generalitat. "
+                    f"Crea un plan de estudio teórico estructurado para dar una vuelta completa a TODO el temario oficial listado abajo. Extiéndete las semanas que sean necesarias (sin límite de 4 semanas, calcula las que hagan falta para cubrir los 41 temas de forma realista). "
+                    f"Dispones de {hs} horas semanales distribuidas en los días: {', '.join(dias_estudio)} (4 horas diarias). "
+                    f"REQUISITO DE CONTENIDO: Cada tarea debe seguir estrictamente este formato limpio por día: número y nombre exacto del tema de la lista oficial, seguido de las horas de teoría y las horas de test (ejemplo: 'Tema 9: Física - 3 horas de lectura y subrayado + 1 hora de test'). Si un tema es muy denso, divídelo en varias sesiones lógicas. "
+                    f"Usa **única y exclusivamente** los temas de este listado oficial. Está prohibido inventar temas externos. "
+                    f"Devuelve el resultado estrictamente en formato JSON puro con una lista de objetos por semana. Cada objeto semana debe tener las claves: "
+                    f"'semana' (número entero), 'objetivo' (string corto) y 'dias' (una lista de objetos, donde cada objeto tiene 'dia' (string con el día) y 'tareas' (una lista de strings con el formato limpio de estudio y test)).\n\n"
+                    f"Listado oficial completo de temas:\n" + "\n".join(temario_oficial)
                 )
                 with st.spinner("Generando plan de estudio estratégico..."):
                     resp = generar_con_reintento(prompt)
@@ -620,10 +813,12 @@ elif opcion == "📅 Plan de Estudio Personalizado":
                             st.session_state.plan_estudio_json = json.loads(clean_json)
                             st.session_state.plan_estudio_texto_raw = ""
                             st.success("¡Plan de estudio estratégico generado con éxito!")
+                            guardar_plan_nube()
                         except Exception:
                             st.session_state.plan_estudio_json = None
                             st.session_state.plan_estudio_texto_raw = resp.text
                             st.success("¡Plan generado con éxito!")
+                            guardar_plan_nube()
 
     if "plan_estudio_json" in st.session_state and st.session_state.plan_estudio_json:
         st.markdown("---")
@@ -641,8 +836,12 @@ elif opcion == "📅 Plan de Estudio Personalizado":
                     for t_idx, tarea in enumerate(d_info.get('tareas', [])):
                         key_check = f"chk_sem_{sem.get('semana')}_{dia_nombre}_{t_idx}"
                         completado = st.checkbox(tarea, key=key_check, value=st.session_state.progreso_estudio.get(key_check, False))
-                        st.session_state.progreso_estudio[key_check] = completado
-            st.markdown("")
+                        
+                        if st.session_state.progreso_estudio.get(key_check) != completado:
+                            st.session_state.progreso_estudio[key_check] = completado
+                            guardar_plan_nube()
+                            
+                st.markdown("")
 
     elif "plan_estudio_texto_raw" in st.session_state and st.session_state.plan_estudio_texto_raw:
         st.markdown("---")
