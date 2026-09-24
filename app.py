@@ -100,14 +100,13 @@ def generar_con_reintento(prompt_texto, intentos=4, espera=3):
         try:
             resp = client.models.generate_content(model=MODELO_IA, contents=prompt_texto)
             return resp
-        except APIError as e:
-            if "503" in str(e) or "UNAVAILABLE" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                if intento < intentos - 1:
-                    time.sleep(espera)
-                    continue
-            raise e
         except Exception as e:
-            st.error(f"Detalle exacto de Google: {e}")
+            st.error(f"Detalle exacto del error de Google: {e}")
+            str_e = str(e)
+            # Si es un error temporal (503, saturación), reintentamos si quedan intentos
+            if ("503" in str_e or "UNAVAILABLE" in str_e or "RESOURCE_EXHAUSTED" in str_e) and intento < intentos - 1:
+                time.sleep(espera)
+                continue
             return None
     return None
 def sincronizar_desde_supabase():
