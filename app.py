@@ -644,14 +644,18 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             st.markdown("---")
             st.markdown("### Tus Rutinas Actuales:")
             
-            for r_nombre, r_ejs in list(st.session_state.mis_rutinas.items()):
+            # Usamos enumerate para tener un índice único 'i' y evitar conflictos en las keys
+            for i, (r_nombre, r_ejs) in enumerate(list(st.session_state.mis_rutinas.items())):
                 c_r1, c_r2 = st.columns([0.8, 0.2])
                 with c_r1: 
                     st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
                 with c_r2:
-                    if st.button("🗑️ Borrar", key=f"btn_del_{r_nombre}"):
+                    # Key única basada en el índice 'i'
+                    if st.button("🗑️ Borrar", key=f"btn_del_idx_{i}"):
+                        # 1. Borramos del diccionario en local
                         del st.session_state.mis_rutinas[r_nombre]
-                        # Forzamos la subida a Supabase tras borrar para que se guarde el estado limpio
+                        
+                        # 2. Guardamos el estado actualizado inmediatamente en Supabase
                         try:
                             json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
                             supabase.storage.from_("temarios").upload(
@@ -659,15 +663,16 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                                 file=json_bytes,
                                 file_options={"content-type": "application/json", "upsert": True}
                             )
-                        except:
+                        except Exception:
                             try:
                                 supabase.storage.from_("temarios").update(
                                     path="datos/mis_rutinas.json",
                                     file=json_bytes,
                                     file_options={"content-type": "application/json"}
                                 )
-                            except:
+                            except Exception:
                                 pass
+                                
                         st.success(f"Rutina '{r_nombre}' eliminada.")
                         st.rerun()
 
