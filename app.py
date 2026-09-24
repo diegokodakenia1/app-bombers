@@ -599,7 +599,11 @@ elif opcion == "📝 Simulacro de Examen":
 # ------------------------------------------------------------------------------
 elif opcion == "🎯 Test por Temas":
     st.header("🎯 Test Específico por Temas")
-    docs = list(st.session_state.textos_pdfs_temario.keys())
+    # Asegurar que la clave existe antes de usarla
+if "textos_pdfs_temario" not in st.session_state:
+    st.session_state.textos_pdfs_temario = {}
+
+docs = list(st.session_state.textos_pdfs_temario.keys())
     if not docs: st.warning("Sube PDFs en la Biblioteca.")
     else:
         ts = st.selectbox("Tema:", docs)
