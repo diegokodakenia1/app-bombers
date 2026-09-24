@@ -107,7 +107,8 @@ def generar_con_reintento(prompt_texto, intentos=4, espera=3):
                     continue
             raise e
         except Exception as e:
-            raise e
+    st.error(f"Detalle exacto de Google: {e}")
+    raise e
     return None
 
 def sincronizar_desde_supabase():
