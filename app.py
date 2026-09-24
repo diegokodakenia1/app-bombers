@@ -88,6 +88,25 @@ def guardar_carreras_nube():
     except Exception as e:
         st.error(f"Error al guardar historial de carreras en la nube: {e}")
 
+# Cargar y extraer automáticamente los PDFs del temario desde Supabase al iniciar
+if "textos_pdfs_temario" not in st.session_state:
+    st.session_state.textos_pdfs_temario = {}
+    try:
+        archivos_nube = supabase.storage.from_("temarios").list("")
+        for archivo in archivos_nube:
+            nombre_archivo = archivo["name"]
+            if nombre_archivo.endswith(".pdf"):
+                pdf_bytes = supabase.storage.from_("temarios").download(nombre_archivo)
+                lector = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+                texto_completo = ""
+                for pagina in lector.pages:
+                    texto_extraido = pagina.extract_text()
+                    if texto_extraido:
+                        texto_completo += texto_extraido + "\n"
+                st.session_state.textos_pdfs_temario[nombre_archivo] = texto_completo
+    except Exception as e:
+        pass
+
 # Carga de la API Key de Gemini
 api_key = None
 try:
@@ -113,7 +132,6 @@ CSV_SIMULACROS = "historial_simulacros.csv"
 CSV_TEST_TEMAS = "historial_test_temas.csv"
 CSV_FALLOS_REPASO = "banco_fallos_repaso.csv"
 CSV_FLASHCARDS = "flashcards_guardadas.csv"
-
 LISTA_EJERCICIOS_HEAVY = [
     # --- PECHO (CHEST) - BARRAS, MANCUERNAS, POLEAS Y MÁQUINAS ---
     "Press de banca plano con barra", "Press de banca plano con mancuernas",
