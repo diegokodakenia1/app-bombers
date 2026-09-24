@@ -606,25 +606,25 @@ if "textos_pdfs_temario" not in st.session_state:
 docs = list(st.session_state.textos_pdfs_temario.keys())
 
 if not docs:
-            st.warning("Sube PDFs en la Biblioteca.")
-        else:
-            # Seleccionar tema para el test
-            tema_sel = st.selectbox("Selecciona un documento/tema:", docs)
-            num_preguntas = st.slider("Número de preguntas:", 5, 20, 10)
-            
-            if st.button("🚀 Generar Test del Tema"):
-                texto_base = st.session_state.textos_pdfs_temario[tema_sel]
-                prompt = (
-                    f"A partir del siguiente texto, genera un test tipo test de {num_preguntas} preguntas "
-                    f"con 4 opciones (A, B, C, D) y marca la respuesta correcta.\n\nTexto:\n{texto_base}"
-                )
-                resp = generar_con_reintento(prompt)
-                if resp:
-                    st.session_state[f"test_{tema_sel}"] = resp.text
-            
-            key_test = f"test_{tema_sel}"
-            if key_test in st.session_state:
-                renderizar_test_interactivo(st.session_state[key_test], key_test, nombre_tema=tema_sel)
+        st.warning("Sube PDFs en la Biblioteca.")
+    else:
+        # Seleccionar tema para el test
+        tema_sel = st.selectbox("Selecciona un documento/tema:", docs)
+        num_preguntas = st.slider("Número de preguntas:", 5, 20, 10)
+        
+        if st.button("🚀 Generar Test del Tema"):
+            texto_base = st.session_state.textos_pdfs_temario[tema_sel]
+            prompt = (
+                f"A partir del siguiente texto, genera un test tipo test de {num_preguntas} preguntas "
+                f"con 4 opciones (A, B, C, D) y marca la respuesta correcta.\n\nTexto:\n{texto_base}"
+            )
+            resp = generar_con_reintento(prompt)
+            if resp:
+                st.session_state[f"test_{tema_sel}"] = resp.text
+        
+        key_test = f"test_{tema_sel}"
+        if key_test in st.session_state:
+            renderizar_test_interactivo(st.session_state[key_test], key_test, nombre_tema=tema_sel)
 
 # ------------------------------------------------------------------------------
 # 4. PREGUNTAS DE REPASO
