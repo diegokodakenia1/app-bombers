@@ -92,20 +92,25 @@ def guardar_carreras_nube():
 if "textos_pdfs_temario" not in st.session_state:
     st.session_state.textos_pdfs_temario = {}
     try:
-        archivos_nube = supabase.storage.from_("temarios").list("")
-        for archivo in archivos_nube:
-            nombre_archivo = archivo["name"]
-            if nombre_archivo.endswith(".pdf"):
-                pdf_bytes = supabase.storage.from_("temarios").download(nombre_archivo)
-                lector = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-                texto_completo = ""
-                for pagina in lector.pages:
-                    texto_extraido = pagina.extract_text()
-                    if texto_extraido:
-                        texto_completo += texto_extraido + "\n"
-                st.session_state.textos_pdfs_temario[nombre_archivo] = texto_completo
+        # En la librería de Supabase, .list() sin parámetros o con path vacío lista la raíz
+        archivos_nube = supabase.storage.from_("temarios").list()
+        
+        if archivos_nube:
+            for archivo in archivos_nube:
+                # Soportar diferentes formatos de respuesta de Supabase
+                nombre_archivo = archivo.get("name") if isinstance(archivo, dict) else getattr(archivo, "name", None)
+                
+                if nombre_archivo and nombre_archivo.endswith(".pdf"):
+                    pdf_bytes = supabase.storage.from_("temarios").download(nombre_archivo)
+                    lector = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+                    texto_completo = ""
+                    for pagina in lector.pages:
+                        texto_extraido = pagina.extract_text()
+                        if texto_extraido:
+                            texto_completo += texto_extraido + "\n"
+                    st.session_state.textos_pdfs_temario[nombre_archivo] = texto_completo
     except Exception as e:
-        pass
+        st.error(f"Error al conectar con el bucket para los PDFs: {e}")
 
 # Carga de la API Key de Gemini
 api_key = None
