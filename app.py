@@ -68,80 +68,99 @@ CSV_FALLOS_REPASO = "banco_fallos_repaso.csv"
 CSV_FLASHCARDS = "flashcards_guardadas.csv"
 
 LISTA_EJERCICIOS_HEAVY = [
-    # --- PECHO (CHEST) ---
+    # --- PECHO (CHEST) - BARRAS, MANCUERNAS, POLEAS Y MÁQUINAS ---
     "Press de banca plano con barra", "Press de banca plano con mancuernas",
     "Press de banca inclinado con barra", "Press de banca inclinado con mancuernas",
     "Press de banca declinado con barra", "Press declinado con mancuernas",
+    "Press en máquina de pecho (Chest Press Machine)", "Press inclinado en máquina",
+    "Press plano en máquina convergente",
+    "Press en máquina Smith (plano)", "Press en máquina Smith (inclinado)", "Press en máquina Smith (declinado)",
     "Aperturas con mancuernas (Chest Fly)", "Aperturas inclinadas con mancuernas",
-    "Cruce de poleas (Cable Crossover - polea alta)", "Cruce de poleas (polea baja / media)",
-    "Pullover con mancuerna", "Pullover en polea",
+    "Contractor de pecho / Pec Deck (Aperturas en máquina)",
+    "Cruce de poleas (Cable Crossover - polea alta)", "Cruce de poleas (polea media / horizontal)", "Cruce de poleas (polea baja para pecho superior)",
+    "Pullover con mancuerna", "Pullover en polea alta", "Pullover en máquina",
     "Fondos en paralelas (Dips - enfoque pecho)", "Flexiones de pecho tradicionales (Push-ups)",
-    "Flexiones declinadas", "Flexiones inclinadas", "Flexiones diamantinas (tríceps/pecho)",
+    "Flexiones declinadas", "Flexiones inclinadas", "Flexiones diamantinas",
 
-    # --- ESPALDA (BACK) ---
+    # --- ESPALDA (BACK) - POLEAS, MÁQUINAS Y LIBRES ---
     "Dominadas pronas lastradas", "Dominadas libres (Pull-ups)", "Dominadas supinas (Chin-ups)",
-    "Dominadas neutras", "Dominadas anchas",
-    "Jalón al pecho en polea (Lat Pulldown)", "Jalón tras nuca en polea", "Jalón con agarre neutro estrecho",
+    "Dominadas neutras", "Dominadas anchas en máquina asistida",
+    "Jalón al pecho en polea (Lat Pulldown - agarre ancho)", "Jalón al pecho con agarre neutro / estrecho", 
+    "Jalón tras nuca en polea", "Jalón con barra V", "Jalón en polea con brazos rectos (Straight-arm Pulldown)",
     "Remo con barra (Barbell Row)", "Remo con mancuerna a una mano (Dumbbell Row)",
-    "Remo en polea baja (Tirón horizontal / Seated Cable Row)", "Remo en máquina T (T-Bar Row)",
-    "Remo Pendlay", "Remo en puntas de barra", "Remo horizontal con pecho apoyado",
-    "Pullover en polea alta con barra recta", "Pullover en polea con cuerda",
-    "Face Pull en polea", "Encogimientos de hombros con barra (Barbell Shrugs)", "Encogimientos con mancuernas",
+    "Remo en polea baja (Seated Cable Row - agarre estrecho / ancho / barra V)", 
+    "Remo en máquina T (T-Bar Row)", "Remo en máquina convergente sentado", "Remo Pendlay",
+    "Remo horizontal con pecho apoyado (Chest-supported Row en máquina o banco)",
+    "Remo en máquina Smith", "Remo en puntas de barra",
+    "Face Pull en polea", "Encogimientos de hombros con barra (Barbell Shrugs)", 
+    "Encogimientos con mancuernas", "Encogimientos en máquina Smith",
 
-    # --- HOMBROS (SHOULDERS) ---
+    # --- HOMBROS (SHOULDERS) - MÁQUINAS, POLEAS Y PESO LIBRE ---
     "Press militar con barra (Standing Overhead Press)", "Press militar sentado con mancuernas",
-    "Press Arnold con mancuernas", "Press tras nuca con barra", "Press en máquina de hombros",
-    "Elevaciones laterales con mancuernas", "Elevaciones laterales en polea baja", "Elevaciones laterales sentadas",
-    "Elevaciones frontales con mancuernas", "Elevaciones frontales con disco o barra",
-    "Pájaros (Elevaciones posteriores con mancuernas)", "Pájaros en polea o máquina contractor invertido",
-    "Elevaciones en Y o W (mancuernas / suelo)",
+    "Press Arnold con mancuernas", "Press en máquina de hombros (Shoulder Press Machine)",
+    "Press en máquina Smith para hombro (tras nuca o frontal)", "Press tras nuca con barra",
+    "Elevaciones laterales con mancuernas", "Elevaciones laterales en polea baja (unilateral / bilateral)", 
+    "Elevaciones laterales sentadas", "Elevaciones laterales en máquina (Lateral Raise Machine)",
+    "Elevaciones frontales con mancuernas", "Elevaciones frontales con disco o polea",
+    "Pájaros (Elevaciones posteriores con mancuernas)", "Pájaros en polea baja (cruce de cables)", 
+    "Contractor invertido / Pec Deck inverso (para deltoides posterior)", "Pájaros en banco inclinado",
+    "Remo al mentón con barra o polea (Upright Row)",
 
-    # --- BÍCEPS (BICEPS) ---
+    # --- BÍCEPS (BICEPS) - BARRAS, MANCUERNAS, POLEAS Y MÁQUINAS ---
     "Curl de bíceps con barra recta", "Curl con barra Z", "Curl con mancuernas alterno de pie",
-    "Curl con mancuernas tipo martillo (Hammer Curl)", "Curl en banco Scott (Predicador con barra Z / mancuernas)",
-    "Curl en polea baja", "Curl concentrado con mancuerna", "Curl inclinado con mancuernas",
-    "Curl en polea alta (Estilo doble bíceps / Crossover)", "Curl zottman",
+    "Curl con mancuernas tipo martillo (Hammer Curl)", "Curl martillo en polea con cuerda",
+    "Curl en banco Scott / Predicador con barra Z", "Curl predicador con mancuerna o máquina",
+    "Curl en polea baja (barra recta o barra Z)", "Curl concentrado con mancuerna", 
+    "Curl inclinado con mancuernas", "Curl en polea alta (Estilo doble bíceps / Crossover)", 
+    "Curl Zottman", "Curl de bíceps en máquina sentado",
 
-    # --- TRÍCEPS (TRICEPS) ---
-    "Press francés con barra Z (Skull Crushers)", "Press francés con mancuernas",
+    # --- TRÍCEPS (TRICEPS) - POLEAS, MÁQUINAS Y LIBRES ---
+    "Press francés con barra Z (Skull Crushers)", "Press francés con mancuernas en banco plano o inclinado",
     "Extensiones de tríceps en polea alta (con cuerda)", "Extensiones de tríceps en polea alta (con barra recta / V)",
-    "Press cerrado en banca (Close-grip Bench Press)", "Patada de tríceps con mancuerna",
-    "Fondos en banco (Bench Dips)", "Extensiones cenitales con mancuerna a dos manos",
-    "Extensiones cenitales con mancuerna a una mano", "Extensiones de tríceps unilaterales en polea",
+    "Press cerrado en banca (Close-grip Bench Press)", "Press cerrado en máquina Smith",
+    "Patada de tríceps con mancuerna", "Patada de tríceps en polea baja (unilateral)",
+    "Fondos en máquina o paralelas (tríceps)", "Extensiones cenitales con mancuerna a dos manos",
+    "Extensiones cenitales con mancuerna o polea a una mano", "Extensiones de tríceps en máquina sentado",
 
-    # --- PIERNAS - CUÁDRICEPS (QUADS) ---
+    # --- PIERNAS - CUÁDRICEPS (QUADS) - MÁQUINAS Y LIBRES ---
     "Sentadilla trasera con barra (Back Squat)", "Sentadilla frontal (Front Squat)",
-    "Sentadilla búlgara con mancuernas (Bulgarian Split Squat)", "Sentadilla Hack en máquina",
-    "Prensa de piernas 45º", "Prensa horizontal", "Extensiones de cuádriceps en máquina",
-    "Zancadas con mancuernas (Lunges)", "Zancadas en máquina / caminata", "Sentadilla Goblet con mancuerna / kettlebell",
-    "Sentadilla Sissy", "Pistol squats (Sentadillas a una pierna)",
+    "Sentadilla en máquina Smith", "Sentadilla búlgara con mancuernas o barra", 
+    "Sentadilla Hack en máquina", "Sentadilla Pendulum en máquina",
+    "Prensa de piernas 45º", "Prensa horizontal", "Prensa vertical",
+    "Extensiones de cuádriceps en máquina (Leg Extension)", 
+    "Zancadas con mancuernas (Lunges)", "Zancadas en máquina Smith o caminata", 
+    "Sentadilla Goblet con mancuerna / kettlebell", "Sentadilla Sissy", "Pistol squats",
 
     # --- PIERNAS - ISQUIOS Y GLÚTEOS (HAMSTRINGS & GLUTES) ---
-    "Peso muerto convencional con barra", "Peso muerto rumano (Romanian Deadlift)", "Peso muerto sumo",
-    "Peso muerto con mancuernas", "Curl de isquios tumbado en máquina (Leg Curl acostado)",
-    "Curl de isquios sentado en máquina", "Curl de isquios femoral de pie",
+    "Peso muerto convencional con barra", "Peso muerto rumano (Romanian Deadlift con barra o mancuernas)", 
+    "Peso muerto sumo", "Peso muerto en máquina Smith",
+    "Curl de isquios tumbado en máquina (Leg Curl acostado)", "Curl de isquios sentado en máquina (Seated Leg Curl)", 
+    "Curl de isquios femoral de pie", "Curl de isquios unilateral en polea",
     "Hip thrust con barra", "Hip thrust en máquina", "Puente de glúteos en suelo",
-    "Patada de glúteo en polea baja", "Buenos días (Good Mornings con barra)", "Patada de glúteo en máquina",
+    "Patada de glúteo en polea baja", "Patada de glúteo en máquina",
+    "Buenos días (Good Mornings con barra)", "Máquina de abductores (glúteo medio)", "Máquina de aductores (aproximadores)",
+    "Pull-through en polea baja",
 
     # --- GEMELOS Y ANTEBRAZOS (CALVES & FOREARMS) ---
-    "Elevación de talones de pie en máquina (Gemelos de pie)", "Elevación de talones sentado en máquina",
-    "Elevación de talones en prensa 45º", "Curl de muñeca con barra (antebrazos)",
-    "Curl de muñeca inverso", "Paseo del granjero con barra o mancuernas (Farmer's Walk)",
+    "Elevación de talones de pie en máquina (Standing Calf Raise)", "Elevación de talones sentado en máquina (Seated Calf Raise)", 
+    "Elevación de talones en prensa 45º", "Elevación de talones en máquina Smith",
+    "Curl de muñeca con barra (antebrazos)", "Curl de muñeca inverso", "Paseo del granjero (Farmer's Walk)",
 
     # --- ABDOMEN Y CORE (CORE) ---
     "Plancha abdominal isométrica", "Plancha lateral", "Abdominales crunch tradicionales en suelo",
-    "Elevación de piernas colgado en barra (Hanging Leg Raises)", "Elevación de rodillas colgado",
-    "Rueda abdominal (Ab Wheel Rollout)", "Russian twists con disco o mancuerna",
-    "Pallof press en polea", "Crunches en polea alta (Abdominales en polea de rodillas)",
-    "Elevaciones de tronco en banco romano (Hyperextensions - core/lumbares)",
+    "Elevación de piernas colgado en barra (Hanging Leg Raises)", "Elevación de rodillas en silla romana",
+    "Abdominales en máquina de crunch (Ab Machine)", "Rueda abdominal (Ab Wheel Rollout)", 
+    "Russian twists con disco o mancuerna", "Pallof press en polea", 
+    "Crunches en polea alta (Abdominales en polea de rodillas)",
+    "Elevaciones de tronco en banco romano (Hyperextensions)", "Giros rusos o twists en polea",
 
     # --- FUNCIONALES, POTENCIA Y OPOSICIÓN BOMBERO ---
     "Salto vertical con contramovimiento", "Cargadas de potencia (Power Clean)",
     "Arrancadas (Snatch)", "Clean and Jerk", "Thrusters con barra o mancuernas",
     "Kettlebell Swing (Oscilación con pesa rusa)", "Carga de saco de arena (Sandbag Carry)",
-    "Lanzamiento de balón medicinal (Ball Slam)", "Pase del granjero (Farmer's Walk con pesados)",
-    "Subida de cuerda sin ayuda de piernas", "Simulación de Course Navette / Test de resistencia",
-    "Burpees", "Saltos al cajón (Box Jumps)"
+    "Lanzamiento de balón medicinal (Ball Slam)", "Subida de cuerda sin ayuda de piernas",
+    "Simulación de Course Navette / Test de resistencia", "Burpees", "Saltos al cajón (Box Jumps)",
+    "Battle Ropes (Cuerdas de batalla)", "Sled Push / Pull (Arrastre y empuje de trineo)"
 ]
 
 def limpiar_nombre_archivo(nombre):
