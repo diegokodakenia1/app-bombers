@@ -606,19 +606,25 @@ if "textos_pdfs_temario" not in st.session_state:
 docs = list(st.session_state.textos_pdfs_temario.keys())
 
 if not docs:
-    st.warning("Sube PDFs en la Biblioteca.")
-else:
-    # (Aquí sigue el resto del código que ya tenías para seleccionar los temas y hacer los tests)
-        ts = st.selectbox("Tema:", docs)
-        cant = st.slider("Preguntas:", 5, 40, 15, 5)
-        if st.button("🚀 Generar Test de Tema"):
-            if verificar_cliente():
-                prompt = f"Genera un test técnico de {cant} preguntas con formato Pregunta, A, B, C, D, respuesta correcta y explicación basado en: {st.session_state.textos_pdfs_temario[ts][:12000]}"
-                with st.spinner("Generando..."):
-                    resp = generar_con_reintento(prompt)
-                    if resp: st.session_state.test_tema_activo = resp.text
-        if "test_tema_activo" in st.session_state:
-            renderizar_test_interactivo(st.session_state.test_tema_activo, "test_tema", nombre_tema=ts)
+            st.warning("Sube PDFs en la Biblioteca.")
+        else:
+            # Seleccionar tema para el test
+            tema_sel = st.selectbox("Selecciona un documento/tema:", docs)
+            num_preguntas = st.slider("Número de preguntas:", 5, 20, 10)
+            
+            if st.button("🚀 Generar Test del Tema"):
+                texto_base = st.session_state.textos_pdfs_temario[tema_sel]
+                prompt = (
+                    f"A partir del siguiente texto, genera un test tipo test de {num_preguntas} preguntas "
+                    f"con 4 opciones (A, B, C, D) y marca la respuesta correcta.\n\nTexto:\n{texto_base}"
+                )
+                resp = generar_con_reintento(prompt)
+                if resp:
+                    st.session_state[f"test_{tema_sel}"] = resp.text
+            
+            key_test = f"test_{tema_sel}"
+            if key_test in st.session_state:
+                renderizar_test_interactivo(st.session_state[key_test], key_test, nombre_tema=tema_sel)
 
 # ------------------------------------------------------------------------------
 # 4. PREGUNTAS DE REPASO
@@ -627,18 +633,21 @@ elif opcion == "💡 Preguntas de Repaso":
     st.header("💡 Preguntas de Repaso Rápido")
     modo = st.radio("Modo:", ["🎯 Repaso de mis Fallos", "🎲 Repaso Aleatorio"])
     if "Fallos" in modo:
-        if not st.session_state.banco_fallos: st.info("No hay fallos registrados aún.")
+        if not st.session_state.banco_fallos: 
+            st.info("No hay fallos registrados aún.")
         else:
             if st.button("🚀 Iniciar Repaso de Fallos"):
                 banco_txt = "".join([f"\nPregunta: {f['enunciado']}\nCorrecta: {f['correcta']}\n" for f in st.session_state.banco_fallos])
                 resp = generar_con_reintento(f"Crea un test con estas preguntas que fallé anteriormente: {banco_txt}")
-                if resp: st.session_state.repaso_fallos_activo = resp.text
+                if resp: 
+                    st.session_state.repaso_fallos_activo = resp.text
             if "repaso_fallos_activo" in st.session_state:
                 renderizar_test_interactivo(st.session_state.repaso_fallos_activo, "repaso_fallos", nombre_tema="Repaso de Fallos")
     else:
         if st.button("🚀 Generar Repaso Aleatorio"):
             resp = generar_con_reintento("Genera 10 preguntas de repaso general tipo test para Bombers.")
-            if resp: st.session_state.repaso_aleatorio = resp.text
+            if resp: 
+                st.session_state.repaso_aleatorio = resp.text
         if "repaso_aleatorio" in st.session_state:
             renderizar_test_interactivo(st.session_state.repaso_aleatorio, "repaso_rand", nombre_tema="Repaso Aleatorio")
 
