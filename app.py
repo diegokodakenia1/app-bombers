@@ -632,14 +632,11 @@ elif opcion == "🏋️‍♂️ Preparación Física":
     with t2:
             st.subheader("Crea y gestiona tus rutinas de entrenamiento")
             
-            # Control de estado para la rutina que se está editando
             if "editando_rutina" not in st.session_state:
                 st.session_state.editando_rutina = None
 
-            # Si acabamos de pulsar editar, guardamos el nombre original para saber qué modificar
             rutina_en_edicion = st.session_state.editando_rutina
 
-            # Valores por defecto según si estamos editando o creando una nueva
             if rutina_en_edicion and rutina_en_edicion in st.session_state.mis_rutinas:
                 def_nombre = rutina_en_edicion
                 def_ejs = st.session_state.mis_rutinas[rutina_en_edicion]
@@ -648,7 +645,6 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 def_nombre = ""
                 def_ejs = []
 
-            # Usamos un truco en la key para forzar que Streamlit actualice los valores por defecto al cambiar de rutina
             key_sufijo = f"_{rutina_en_edicion}" if rutina_en_edicion else "_nueva"
 
             nombre_nueva_rutina = st.text_input(
@@ -670,14 +666,12 @@ elif opcion == "🏋️‍♂️ Preparación Física":
 
                 if st.button(btn_texto, key="btn_guardar_nueva_rutina"):
                     if nombre_nueva_rutina and lista_ejercicios:
-                        # Si estábamos editando y cambiamos el nombre, borramos la clave antigua
                         if rutina_en_edicion and rutina_en_edicion != nombre_nueva_rutina:
                             if rutina_en_edicion in st.session_state.mis_rutinas:
                                 del st.session_state.mis_rutinas[rutina_en_edicion]
 
-                        # Guardamos/Actualizamos la rutina con los ejercicios seleccionados
                         st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
-                        st.session_state.editando_rutina = None  # Salimos del modo edición
+                        st.session_state.editando_rutina = None
                         
                         try:
                             json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
@@ -710,7 +704,8 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 
                 rutinas_keys = list(st.session_state.mis_rutinas.keys())
                 
-                for r_nombre in rutinas_keys:
+                # Usamos enumerate para añadir el índice 'i' y evitar cualquier duplicidad de keys
+                for i, r_nombre in enumerate(rutinas_keys):
                     r_ejs = st.session_state.mis_rutinas[r_nombre]
                     c_r1, c_r2, c_r3 = st.columns([0.65, 0.17, 0.18])
                     
@@ -718,13 +713,13 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                         st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
                     
                     with c_r2:
-                        btn_edit_key = f"btn_edit_{r_nombre.strip().replace(' ', '_')}"
+                        btn_edit_key = f"btn_edit_{i}_{r_nombre.strip().replace(' ', '_')}"
                         if st.button("✏️ Editar", key=btn_edit_key):
                             st.session_state.editando_rutina = r_nombre
                             st.rerun()
 
                     with c_r3:
-                        btn_del_key = f"btn_del_name_{r_nombre.strip().replace(' ', '_')}"
+                        btn_del_key = f"btn_del_name_{i}_{r_nombre.strip().replace(' ', '_')}"
                         if st.button("🗑️ Borrar", key=btn_del_key):
                             if st.session_state.editando_rutina == r_nombre:
                                 st.session_state.editando_rutina = None
