@@ -714,7 +714,7 @@ elif opcion == "💡 Preguntas de Repaso":
         if "repaso_aleatorio" in st.session_state:
             renderizar_test_interactivo(st.session_state.repaso_aleatorio, "repaso_rand", nombre_tema="Repaso Aleatorio")
 # ------------------------------------------------------------------------------
-# 5. PREPARACIÓN FÍSICA
+# 5. PREPARACIÓN FÍSICA (ESTILO HEVY INTEGRADO)
 # ------------------------------------------------------------------------------
 elif opcion == "🏋️‍♂️ Preparación Física":
     st.header("🏋️‍♂️ Preparación Física & Progreso")
@@ -731,14 +731,42 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             ejercicios_rutina = st.session_state.mis_rutinas[rutina_sel]
             
             nuevos_registros = []
+            
             for ej in ejercicios_rutina:
                 st.markdown(f"#### 🔹 {ej}")
+                
+                # --- BUSCAR HISTORIAL ANTERIOR (ESTILO HEVY) ---
+                peso_anterior = 0.0
+                reps_anterior = 0
+                if st.session_state.get("historial_marcas"):
+                    # Filtramos el historial para este ejercicio específico para sacar el último registro
+                    df_h = pd.DataFrame(st.session_state.historial_marcas)
+                    df_ej = df_h[df_h["Ejercicio"] == ej]
+                    if not df_ej.empty:
+                        # Cogemos la última fila registrada
+                        ultimo_reg = df_ej.iloc[-1]
+                        peso_anterior = float(ultimo_reg.get("Peso (kg)", 0.0))
+                        reps_anterior = int(ultimo_reg.get("Reps", 0))
+
                 num_series = st.number_input(f"Número de series para {ej}:", 1, 6, 3, key=f"ns_{ej}")
+                
                 for s in range(1, int(num_series) + 1):
-                    col_s1, col_s2, col_s3 = st.columns(3)
+                    # Dividimos en columnas: Izquierda (Anterior) | Derecha (Inputs de hoy)
+                    col_prev, col_s1, col_s2, col_s3 = st.columns([1.2, 0.8, 1, 1])
+                    
+                    with col_prev:
+                        if peso_anterior > 0:
+                            st.markdown(f"🕒 *Ant: {peso_anterior}kg × {reps_anterior}r*")
+                        else:
+                            st.markdown("🕒 *Ant: Sin datos*")
+                            
                     with col_s1: st.text(f"Serie {s}")
                     with col_s2: peso_s = st.number_input(f"Peso (kg) - {ej} S{s}", 0.0, step=0.5, key=f"peso_{ej}_{s}")
                     with col_s3: reps_s = st.number_input(f"Reps - {ej} S{s}", 1, 100, 10, key=f"reps_{ej}_{s}")
+                    
+                    # --- DETECCIÓN DE RÉCORD EN TIEMPO REAL (MEDALLA HEVY) ---
+                    if peso_anterior > 0 and (peso_s > peso_anterior or (peso_s == peso_anterior and reps_s > reps_anterior)):
+                        st.success(f"🏆 ¡Récord superado en {ej} (Serie {s})! 🥇")
                     
                     nuevos_registros.append({
                         "Fecha": str(fecha_entreno),
@@ -748,6 +776,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                         "Peso (kg)": peso_s,
                         "Reps": reps_s
                     })
+                st.markdown("---")
             
             if st.button("💾 Guardar Entrenamiento y Actualizar Progreso"):
                 st.session_state.historial_marcas.extend(nuevos_registros)
@@ -755,6 +784,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 st.success("🎉 ¡Entrenamiento guardado con éxito en la nube!")
 
     with t2:
+        # (Todo tu código intacto de Crear / Gestionar Rutinas)
         st.subheader("Crea y gestiona tus rutinas de entrenamiento")
         
         if "editando_rutina" not in st.session_state:
@@ -877,14 +907,33 @@ elif opcion == "🏋️‍♂️ Preparación Física":
         tipo_progreso = st.radio("Selecciona el tipo de progreso a visualizar:", ["🏋️‍♂️ Fuerza (Gym)", "🏃‍♂️ Carrera"], horizontal=True)
         
         if tipo_progreso == "🏋️‍♂️ Fuerza (Gym)":
-            if st.session_state.get("historial_marcas"):
+            if st.session_state.get("historial_marcas") and st.session_state.get("mis_rutinas"):
                 df_marcas = pd.DataFrame(st.session_state.historial_marcas)
-                ejercicio_grafico = st.selectbox("Selecciona ejercicio para ver evolución de peso:", df_marcas["Ejercicio"].unique())
-                df_filtrado = df_marcas[df_marcas["Ejercicio"] == ejercicio_grafico]
-                st.line_chart(df_filtrado.set_index("Fecha")[["Peso (kg)"]])
-                st.dataframe(df_filtrado, use_container_width=True)
+                
+                # --- NUEVO ENFOQUE ESTILO HEVY: SELECCIONAR RUTINA ---
+                rutina_grafico = st.selectbox("Selecciona la rutina para ver el desglose de sus ejercicios:", list(st.session_state.mis_rutinas.keys()))
+                
+                if rutina_grafico:
+                    ejercicios_de_esta_rutina = st.session_state.mis_rutinas[rutina_grafico]
+                    st.markdown(f"### Evolución de la rutina: *{rutina_grafico}*")
+                    
+                    # Tarjeta y gráfica individual por cada ejercicio de esa rutina (Estilo Hevy)
+                    for ej in ejercicios_de_esta_rutina:
+                        st.markdown(f"#### 📊 {ej}")
+                        df_filtrado = df_marcas[df_marcas["Ejercicio"] == ej]
+                        
+                        if not df_filtrado.empty:
+                            # Mostramos métrica rápida de mejor marca histórica en este ejercicio
+                            max_peso = df_filtrado["Peso (kg)"].max()
+                            st.metric(label=f"🏆 Récord Personal (PR) en {ej}", value=f"{max_peso} kg")
+                            
+                            # Gráfica de evolución temporal para este ejercicio
+                            st.line_chart(df_filtrado.set_index("Fecha")[["Peso (kg)"]])
+                        else:
+                            st.info(f"Todavía no hay registros guardados para {ej}.")
+                        st.markdown("---")
             else:
-                st.info("Todavía no hay registros de entrenamientos de fuerza guardados.")
+                st.info("Todavía no hay registros de entrenamientos de fuerza o rutinas guardadas.")
         
         else:  # Carrera
             if st.session_state.get("historial_carreras"):
@@ -897,6 +946,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 st.info("Todavía no hay registros de entrenamientos de carrera guardados.")
 
     with t4:
+        # (Todo tu código intacto de Entrenamientos de Carrera)
         st.subheader("🏃‍♂️ Registrar Entrenamiento de Carrera")
 
         fecha_carrera = st.date_input("Fecha de la carrera:", value=datetime.date.today(), key="fecha_carrera_input")
