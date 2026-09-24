@@ -632,23 +632,30 @@ elif opcion == "🏋️‍♂️ Preparación Física":
     with t2:
             st.subheader("Crea y gestiona tus rutinas de entrenamiento")
             
+            # 1. Inicializamos las variables de estado si no existen
             if "editando_rutina" not in st.session_state:
                 st.session_state.editando_rutina = None
+            if "form_nombre_rutina" not in st.session_state:
+                st.session_state.form_nombre_rutina = ""
+            if "form_ejs_rutina" not in st.session_state:
+                st.session_state.form_ejs_rutina = []
 
             rutina_en_edicion = st.session_state.editando_rutina
 
             if rutina_en_edicion:
                 st.info(f"✏️ Estás editando la rutina: **{rutina_en_edicion}**. Modifica el nombre o añade/quita ejercicios y guarda los cambios.")
 
-            # Campos de entrada de datos (Streamlit lee y escribe automáticamente en estas keys)
+            # 2. Los widgets leen su valor inicial de session_state mediante callbacks o asignación previa
             nombre_nueva_rutina = st.text_input(
                 "Nombre de la rutina:", 
+                value=st.session_state.form_nombre_rutina,
                 key="input_nombre_rutina_main"
             )
             
             lista_ejercicios = st.multiselect(
                 "Selecciona o deselecciona ejercicios:",
                 LISTA_EJERCICIOS_HEAVY,
+                default=st.session_state.form_ejs_rutina,
                 key="multiselect_ejercicios_main"
             )
             
@@ -657,12 +664,16 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 btn_texto = "💾 Guardar Cambios de la Rutina" if rutina_en_edicion else "➕ Guardar Nueva Rutina"
 
                 if st.button(btn_texto, key="btn_guardar_rutina_accion"):
-                    if nombre_nueva_rutina and lista_ejercicios:
-                        if rutina_en_edicion and rutina_en_edicion != nombre_nueva_rutina:
+                    # Capturamos lo que hay actualmente en los inputs de la pantalla
+                    val_nombre = st.session_state.get("input_nombre_rutina_main", "")
+                    val_ejs = st.session_state.get("multiselect_ejercicios_main", [])
+
+                    if val_nombre and val_ejs:
+                        if rutina_en_edicion and rutina_en_edicion != val_nombre:
                             if rutina_en_edicion in st.session_state.mis_rutinas:
                                 del st.session_state.mis_rutinas[rutina_en_edicion]
 
-                        st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
+                        st.session_state.mis_rutinas[val_nombre] = val_ejs
                         
                         try:
                             json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
@@ -677,12 +688,12 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                                 file_options={"content-type": "application/json"}
                             )
                             
-                            # Limpiamos el modo edición y reseteamos los campos
+                            # Reseteamos todo tras guardar con éxito
                             st.session_state.editando_rutina = None
-                            st.session_state["input_nombre_rutina_main"] = ""
-                            st.session_state["multiselect_ejercicios_main"] = []
+                            st.session_state.form_nombre_rutina = ""
+                            st.session_state.form_ejs_rutina = []
                             
-                            st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada y sincronizada con éxito!")
+                            st.success(f"¡Rutina '{val_nombre}' guardada y sincronizada con éxito!")
                             st.rerun()
                         except Exception as e2:
                             st.error(f"Error al guardar en la nube: {e2}")
@@ -693,8 +704,8 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 if rutina_en_edicion:
                     if st.button("❌ Cancelar", key="cancelar_edicion_rutina"):
                         st.session_state.editando_rutina = None
-                        st.session_state["input_nombre_rutina_main"] = ""
-                        st.session_state["multiselect_ejercicios_main"] = []
+                        st.session_state.form_nombre_rutina = ""
+                        st.session_state.form_ejs_rutina = []
                         st.rerun()
 
             if st.session_state.mis_rutinas:
@@ -712,18 +723,18 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                     
                     with c_r2:
                         if st.button("✏️ Editar", key=f"edit_rutina_idx_{i}"):
+                            # 3. Actualizamos las variables de estado ANTES de recargar
                             st.session_state.editando_rutina = r_nombre
-                            # Inyectamos los datos directamente en el estado de los inputs para que aparezcan rellenados
-                            st.session_state["input_nombre_rutina_main"] = r_nombre
-                            st.session_state["multiselect_ejercicios_main"] = r_ejs
+                            st.session_state.form_nombre_rutina = r_nombre
+                            st.session_state.form_ejs_rutina = r_ejs
                             st.rerun()
 
                     with c_r3:
                         if st.button("🗑️ Borrar", key=f"del_rutina_idx_{i}"):
                             if st.session_state.editando_rutina == r_nombre:
                                 st.session_state.editando_rutina = None
-                                st.session_state["input_nombre_rutina_main"] = ""
-                                st.session_state["multiselect_ejercicios_main"] = []
+                                st.session_state.form_nombre_rutina = ""
+                                st.session_state.form_ejs_rutina = []
                                 
                             if r_nombre in st.session_state.mis_rutinas:
                                 del st.session_state.mis_rutinas[r_nombre]
