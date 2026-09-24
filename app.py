@@ -739,11 +739,9 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 peso_anterior = 0.0
                 reps_anterior = 0
                 if st.session_state.get("historial_marcas"):
-                    # Filtramos el historial para este ejercicio específico para sacar el último registro
                     df_h = pd.DataFrame(st.session_state.historial_marcas)
                     df_ej = df_h[df_h["Ejercicio"] == ej]
                     if not df_ej.empty:
-                        # Cogemos la última fila registrada
                         ultimo_reg = df_ej.iloc[-1]
                         peso_anterior = float(ultimo_reg.get("Peso (kg)", 0.0))
                         reps_anterior = int(ultimo_reg.get("Reps", 0))
@@ -751,7 +749,6 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 num_series = st.number_input(f"Número de series para {ej}:", 1, 6, 3, key=f"ns_{ej}")
                 
                 for s in range(1, int(num_series) + 1):
-                    # Dividimos en columnas: Izquierda (Anterior) | Derecha (Inputs de hoy)
                     col_prev, col_s1, col_s2, col_s3 = st.columns([1.2, 0.8, 1, 1])
                     
                     with col_prev:
@@ -784,7 +781,6 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 st.success("🎉 ¡Entrenamiento guardado con éxito en la nube!")
 
     with t2:
-        # (Todo tu código intacto de Crear / Gestionar Rutinas)
         st.subheader("Crea y gestiona tus rutinas de entrenamiento")
         
         if "editando_rutina" not in st.session_state:
@@ -910,24 +906,19 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             if st.session_state.get("historial_marcas") and st.session_state.get("mis_rutinas"):
                 df_marcas = pd.DataFrame(st.session_state.historial_marcas)
                 
-                # --- NUEVO ENFOQUE ESTILO HEVY: SELECCIONAR RUTINA ---
                 rutina_grafico = st.selectbox("Selecciona la rutina para ver el desglose de sus ejercicios:", list(st.session_state.mis_rutinas.keys()))
                 
                 if rutina_grafico:
                     ejercicios_de_esta_rutina = st.session_state.mis_rutinas[rutina_grafico]
                     st.markdown(f"### Evolución de la rutina: *{rutina_grafico}*")
                     
-                    # Tarjeta y gráfica individual por cada ejercicio de esa rutina (Estilo Hevy)
                     for ej in ejercicios_de_esta_rutina:
                         st.markdown(f"#### 📊 {ej}")
                         df_filtrado = df_marcas[df_marcas["Ejercicio"] == ej]
                         
                         if not df_filtrado.empty:
-                            # Mostramos métrica rápida de mejor marca histórica en este ejercicio
                             max_peso = df_filtrado["Peso (kg)"].max()
                             st.metric(label=f"🏆 Récord Personal (PR) en {ej}", value=f"{max_peso} kg")
-                            
-                            # Gráfica de evolución temporal para este ejercicio
                             st.line_chart(df_filtrado.set_index("Fecha")[["Peso (kg)"]])
                         else:
                             st.info(f"Todavía no hay registros guardados para {ej}.")
@@ -935,7 +926,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             else:
                 st.info("Todavía no hay registros de entrenamientos de fuerza o rutinas guardadas.")
         
-        else:  # Carrera
+        else:
             if st.session_state.get("historial_carreras"):
                 df_carreras = pd.DataFrame(st.session_state.historial_carreras)
                 st.markdown("#### 📊 Evolución de Kilómetros por Sesión")
@@ -946,7 +937,6 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 st.info("Todavía no hay registros de entrenamientos de carrera guardados.")
 
     with t4:
-        # (Todo tu código intacto de Entrenamientos de Carrera)
         st.subheader("🏃‍♂️ Registrar Entrenamiento de Carrera")
 
         fecha_carrera = st.date_input("Fecha de la carrera:", value=datetime.date.today(), key="fecha_carrera_input")
@@ -974,162 +964,6 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             st.session_state.historial_carreras.append(nuevo_registro_carrera)
             guardar_carreras_nube()
             st.success("🎉 ¡Entrenamiento de carrera guardado y añadido al progreso con éxito!")
-
-# ------------------------------------------------------------------------------
-# 6. PLAN DE ESTUDIO
-# ------------------------------------------------------------------------------
-elif opcion == "📅 Plan de Estudio Personalizado":
-    st.header("📅 Planificador Estratégico de Estudio")
-    st.write("Diseña tu planificación teórica a largo plazo basada en los PDFs de tu biblioteca + 7 temas de legislación.")
-    
-    col_ps1, col_ps2 = st.columns(2)
-    with col_ps1:
-        hs = st.slider("Horas disponibles a la semana:", 5, 50, 20, 5)
-    with col_ps2:
-        dias_estudio = st.multiselect(
-            "Días de estudio semanales:",
-            ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
-            default=["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
-        )
-
-    if st.button("🚀 Generar Plan Estratégico"):
-        if client is not None:
-            if not dias_estudio:
-                st.warning("Selecciona al menos un día de estudio en la semana.")
-            else:
-                # Listado oficial completo: 7 de legislación + Temas técnicos del 8 al 34
-                temario_oficial = [
-                    # Legislación (Temas 1 a 7)
-                    "Tema 01: Constitución Española, Estatut d'Autonomia, Administració catalana e instituciones",
-                    "Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario",
-                    "Tema 03: Ley 31/1995 de Prevención de Riesgos Laborales, EPIs y normativa de despliegue",
-                    "Tema 04: Ley 19/2020 de igualdad de trato y no discriminación",
-                    "Tema 05: Ley 17/2015 de igualdad efectiva de mujeres y hombres (Cap. 1, 3 y 4)",
-                    "Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil",
-                    "Tema 07: Decreto 276/2016 de funciones de guardia y sistema de comandamiento, y Decreto 12/2023 de reestructuración del departamento de Interior",
-                    
-                    # Temario Específico / Técnico (Temas 8 al 34)
-                    "Tema 08: Teoría del Fuego",
-                    "Tema 09: Física",
-                    "Tema 10: Química",
-                    "Tema 11: Electricidad",
-                    "Tema 12: Instalaciones",
-                    "Tema 13: Hidráulica y Bombas",
-                    "Tema 14: Cartografía y Orientación",
-                    "Tema 15: Construcción",
-                    "Tema 16: Intervención básica en asistencias técnicas",
-                    "Tema 17: Comunicaciones por radio",
-                    "Tema 18: Vehículos de intervención en emergencies",
-                    "Tema 19: Conducción y mecánica",
-                    "Tema 20: Equipos de protección individual en emergencias",
-                    "Tema 21: Introducción a la gestión de emergencias y Protección Civil",
-                    "Tema 22: Principis i característiques del Sistema de Comandament",
-                    "Tema 23: Prevención básica de incendios",
-                    "Tema 24: Intervención básica en incendios estructurales",
-                    "Tema 25: Intervención básica en incendios forestales",
-                    "Tema 26: Prevención incendios varios",
-                    "Tema 27: Intervención básica en riesgos NRBQ",
-                    "Tema 28: Asistencia sanitaria",
-                    "Tema 29: Intervención básica en incidentes de múltiples víctimas",
-                    "Tema 30: Intervención básica en estructuras colapsadas",
-                    "Tema 31: Intervención básica al medi natural terrestre",
-                    "Tema 32: Intervención básica en accidentes de movilidad viaria",
-                    "Tema 33: Intervención básica en rescate urbano",
-                    "Tema 34: Intervención básica en inundaciones"
-                ]
-
-                prompt = (
-                    f"Actúa como un planificador experto y directo para oposiciones de Bombers de la Generalitat. "
-                    f"Crea un plan de estudio teórico estructurado para dar una vuelta completa a TODO el temario oficial listado abajo. Extiéndete las semanas que sean necesarias (sin límite de 4 semanas, calcula las que hagan falta para cubrir los 41 temas de forma realista). "
-                    f"Dispones de {hs} horas semanales distribuidas en los días: {', '.join(dias_estudio)} (4 horas diarias). "
-                    f"REQUISITO DE CONTENIDO: Cada tarea debe seguir estrictamente este formato limpio por día: número y nombre exacto del tema de la lista oficial, seguido de las horas de teoría y las horas de test (ejemplo: 'Tema 9: Física - 3 horas de lectura y subrayado + 1 hora de test'). Si un tema es muy denso, divídelo en varias sesiones lógicas. "
-                    f"Usa **única y exclusivamente** los temas de este listado oficial. Está prohibido inventar temas externos. "
-                    f"Devuelve el resultado estrictamente en formato JSON puro con una lista de objetos por semana. Cada objeto semana debe tener las claves: "
-                    f"'semana' (número entero), 'objetivo' (string corto) y 'dias' (una lista de objetos, donde cada objeto tiene 'dia' (string con el día) y 'tareas' (una lista de strings con el formato limpio de estudio y test)).\n\n"
-                    f"Listado oficial completo de temas:\n" + "\n".join(temario_oficial)
-                )
-                with st.spinner("Generando plan de estudio estratégico..."):
-                    resp = generar_con_reintento(prompt)
-                    if resp:
-                        try:
-                            clean_json = resp.text.strip().replace("```json", "").replace("```", "")
-                            st.session_state.plan_estudio_json = json.loads(clean_json)
-                            st.session_state.plan_estudio_texto_raw = ""
-                            st.success("¡Plan de estudio estratégico generado con éxito!")
-                            guardar_plan_nube()
-                        except Exception:
-                            st.session_state.plan_estudio_json = None
-                            st.session_state.plan_estudio_texto_raw = resp.text
-                            st.success("¡Plan generado con éxito!")
-                            guardar_plan_nube()
-
-    if "plan_estudio_json" in st.session_state and st.session_state.plan_estudio_json:
-        st.markdown("---")
-        st.subheader("📋 Tu Plan de Estudio Interactivo")
-        st.write("Marca las tareas a medida que las vayas completando para llevar un seguimiento de tu progreso:")
-        
-        if "progreso_estudio" not in st.session_state:
-            st.session_state.progreso_estudio = {}
-
-        # REFUERZO: Inyectar todo el progreso guardado en las keys de Streamlit antes de pintar
-        for k, v in st.session_state.progreso_estudio.items():
-            st.session_state[k] = v
-
-        for sem in st.session_state.plan_estudio_json:
-            with st.expander(f"Semana {sem.get('semana')}: {sem.get('objetivo', '')}", expanded=False):
-                for d_info in sem.get('dias', []):
-                    dia_nombre = d_info.get('dia', '')
-                    st.markdown(f"**📅 {dia_nombre}**")
-                    for t_idx, tarea in enumerate(d_info.get('tareas', [])):
-                        key_check = f"chk_sem_{sem.get('semana')}_{dia_nombre}_{t_idx}"
-                        
-                        # Asegurar clave individual
-                        if key_check not in st.session_state:
-                            st.session_state[key_check] = st.session_state.progreso_estudio.get(key_check, False)
-
-                        def actualizar_checkbox(k=key_check):
-                            st.session_state.progreso_estudio[k] = st.session_state[k]
-                            guardar_plan_nube()
-
-                        st.checkbox(tarea, key=key_check, on_change=actualizar_checkbox)
-                        
-                    st.markdown("")
-
-    elif "plan_estudio_texto_raw" in st.session_state and st.session_state.plan_estudio_texto_raw:
-        st.markdown("---")
-        st.markdown(st.session_state.plan_estudio_texto_raw)
-
-# ------------------------------------------------------------------------------
-# 7. FLASHCARDS
-# ------------------------------------------------------------------------------
-elif opcion == "🎴 Flashcards de Memorización":
-    st.header("🎴 Tarjetas de Memorización")
-    docs = list(st.session_state.textos_pdfs_temario.keys())
-    t1, t2 = st.tabs(["➕ Generar Flashcards", "🎴 Ver Flashcards Guardadas"])
-    with t1:
-        if not docs: st.warning("Sube PDFs primero.")
-        else:
-            ts = st.selectbox("Tema base:", docs)
-            nf = st.slider("Número de flashcards:", 3, 15, 8)
-            if st.button("Generar"):
-                resp = generar_con_reintento(f"Genera {nf} flashcards (anverso y reverso concisos) basadas en: {st.session_state.textos_pdfs_temario[ts][:10000]}. Devuelve un JSON puro en formato de lista de diccionarios con claves 'anverso' y 'reverso'.")
-                if resp:
-                    try:
-                        clean = resp.text.strip().replace("```json", "").replace("```", "")
-                        cards = json.loads(clean)
-                        for c in cards:
-                            c["tema"] = ts
-                            if not any(x.get("anverso") == c.get("anverso") for x in st.session_state.flashcards):
-                                st.session_state.flashcards.append(c)
-                        guardar_flashcards_disco()
-                        st.success("¡Flashcards guardadas!")
-                    except Exception as e: st.error(f"Error procesando JSON: {e}")
-    with t2:
-        if not st.session_state.flashcards: st.info("No hay flashcards.")
-        else:
-            for fc in st.session_state.flashcards:
-                with st.expander(f"[{fc.get('tema')}] {fc.get('anverso')}"):
-                    st.write(fc.get('reverso'))
 # ------------------------------------------------------------------------------
 # 6. PLAN DE ESTUDIO
 # ------------------------------------------------------------------------------
