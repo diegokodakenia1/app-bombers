@@ -210,19 +210,19 @@ def guardar_banco_fallos_disco():
             except Exception:
                 pass
 def guardar_plan_nube():
-    """Guarda el plan de estudio y el progreso actual en Supabase o en el estado local."""
+    """Guarda el plan y el progreso actual en Supabase."""
     try:
-        # Si ya tienes el cliente de Supabase configurado en tu app, 
-        # puedes añadir aquí la llamada para actualizar la tabla del usuario.
-        # Por ejemplo:
-        # supabase.table("tu_tabla").upsert({
-        #     "usuario_id": ..., 
-        #     "plan_json": st.session_state.get("plan_estudio_json"),
-        #     "progreso": st.session_state.get("progreso_estudio")
-        # }).execute()
-        pass
+        # Asegúrate de que 'supabase' es tu cliente inicializado (ej: supabase = create_client(...))
+        if 'supabase' in globals() or 'supabase' in locals():
+            datos_a_guardar = {
+                "user_id": "usuario_principal",  # O el identificador que uses
+                "plan_json": st.session_state.get("plan_estudio_json", []),
+                "progreso": st.session_state.get("progreso_estudio", {})
+            }
+            # Cambia "planes_estudio" por el nombre exacto de tu tabla en Supabase
+            supabase.table("planes_estudio").upsert(datos_a_guardar).execute()
     except Exception as e:
-        print(f"Error al guardar en la nube: {e}")
+        st.error(f"Error al sincronizar con la nube: {e}")
 
 def guardar_flashcards_disco():
     if st.session_state.flashcards:
