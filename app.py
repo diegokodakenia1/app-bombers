@@ -597,10 +597,10 @@ elif opcion == "📝 Simulacro de Examen":
 # ------------------------------------------------------------------------------
 # 3. TEST POR TEMAS
 # ------------------------------------------------------------------------------
-elif opcion == "🎯 Test por Temas":
-    st.header("🎯 Test Específico por Temas")
-   # Asegurar que la clave existe antes de usarla
-if "textos_pdfs_temario" not in st.session_state:
+elif opcion == "📚 Test por Temas":
+    st.header("📚 Test por Temas")
+    
+    if "textos_pdfs_temario" not in st.session_state:
         st.session_state.textos_pdfs_temario = {}
 
     docs = list(st.session_state.textos_pdfs_temario.keys())
