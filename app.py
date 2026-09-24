@@ -619,7 +619,6 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                     
                     try:
                         json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
-                        # Forzamos borrado previo para evitar conflictos de caché en el Storage
                         try:
                             supabase.storage.from_("temarios").remove(["datos/mis_rutinas.json"])
                         except:
@@ -641,12 +640,18 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 st.markdown("---")
                 st.markdown("### Tus Rutinas Actuales:")
                 
-                for i, (r_nombre, r_ejs) in enumerate(list(st.session_state.mis_rutinas.items())):
+                # Usamos una copia de las keys para iterar seguros de no corromper el bucle
+                rutinas_keys = list(st.session_state.mis_rutinas.keys())
+                
+                for r_nombre in rutinas_keys:
+                    r_ejs = st.session_state.mis_rutinas[r_nombre]
                     c_r1, c_r2 = st.columns([0.8, 0.2])
                     with c_r1: 
                         st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
                     with c_r2:
-                        if st.button("🗑️ Borrar", key=f"btn_del_idx_{i}"):
+                        # CLAVE ÚNICA E INVARIABLE: el propio nombre de la rutina sanitizado
+                        btn_key = f"btn_del_name_{r_nombre.strip().replace(' ', '_')}"
+                        if st.button("🗑️ Borrar", key=btn_key):
                             # 1. Borramos del diccionario en local
                             del st.session_state.mis_rutinas[r_nombre]
                             
