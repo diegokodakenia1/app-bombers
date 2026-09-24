@@ -632,47 +632,50 @@ elif opcion == "🏋️‍♂️ Preparación Física":
     with t2:
             st.subheader("Crea y gestiona tus rutinas de entrenamiento")
             
-            # Control de estado para saber si estamos editando una rutina existente
+            # Control de estado para la rutina que se está editando
             if "editando_rutina" not in st.session_state:
                 st.session_state.editando_rutina = None
 
-            # Si estamos editando, precargamos los valores
-            if st.session_state.editando_rutina:
-                rutina_a_editar = st.session_state.editando_rutina
-                def_nombre = rutina_a_editar
-                def_ejs = st.session_state.mis_rutinas.get(rutina_a_editar, [])
-                st.info(f"✏️ Editando rutina: **{rutina_a_editar}**")
+            # Si acabamos de pulsar editar, guardamos el nombre original para saber qué modificar
+            rutina_en_edicion = st.session_state.editando_rutina
+
+            # Valores por defecto según si estamos editando o creando una nueva
+            if rutina_en_edicion and rutina_en_edicion in st.session_state.mis_rutinas:
+                def_nombre = rutina_en_edicion
+                def_ejs = st.session_state.mis_rutinas[rutina_en_edicion]
+                st.info(f"✏️ Estás editando la rutina: **{rutina_en_edicion}**. Modifica el nombre o añade/quita ejercicios directamente en el selector.")
             else:
                 def_nombre = ""
                 def_ejs = []
 
+            # Usamos un truco en la key para forzar que Streamlit actualice los valores por defecto al cambiar de rutina
+            key_sufijo = f"_{rutina_en_edicion}" if rutina_en_edicion else "_nueva"
+
             nombre_nueva_rutina = st.text_input(
                 "Nombre de la rutina:", 
                 value=def_nombre,
-                key="input_nombre_nueva_rutina"
+                key=f"input_nombre{key_sufijo}"
             )
+            
             lista_ejercicios = st.multiselect(
-                "Selecciona los ejercicios que componen esta rutina (Catálogo Completo):",
+                "Selecciona o deselecciona ejercicios (los actuales ya vienen marcados):",
                 LISTA_EJERCICIOS_HEAVY,
                 default=def_ejs,
-                key="multiselect_nueva_rutina"
+                key=f"multiselect_ejercicios{key_sufijo}"
             )
             
             col_b1, col_b2 = st.columns([0.8, 0.2])
             with col_b1:
-                if st.session_state.editando_rutina:
-                    btn_texto = "💾 Guardar Cambios de la Rutina"
-                else:
-                    btn_texto = "➕ Guardar Nueva Rutina"
+                btn_texto = "💾 Guardar Cambios de la Rutina" if rutina_en_edicion else "➕ Guardar Nueva Rutina"
 
                 if st.button(btn_texto, key="btn_guardar_nueva_rutina"):
                     if nombre_nueva_rutina and lista_ejercicios:
-                        # Si cambiamos el nombre al editar, borramos la clave antigua para que no se duplique
-                        old_name = st.session_state.editando_rutina
-                        if old_name and old_name != nombre_nueva_rutina and old_name in st.session_state.mis_rutinas:
-                            del st.session_state.mis_rutinas[old_name]
+                        # Si estábamos editando y cambiamos el nombre, borramos la clave antigua
+                        if rutina_en_edicion and rutina_en_edicion != nombre_nueva_rutina:
+                            if rutina_en_edicion in st.session_state.mis_rutinas:
+                                del st.session_state.mis_rutinas[rutina_en_edicion]
 
-                        # Guardamos/Actualizamos la rutina
+                        # Guardamos/Actualizamos la rutina con los ejercicios seleccionados
                         st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
                         st.session_state.editando_rutina = None  # Salimos del modo edición
                         
@@ -696,7 +699,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                         st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
             
             with col_b2:
-                if st.session_state.editando_rutina:
+                if rutina_en_edicion:
                     if st.button("❌ Cancelar", key="cancelar_edicion"):
                         st.session_state.editando_rutina = None
                         st.rerun()
