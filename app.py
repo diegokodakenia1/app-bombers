@@ -143,9 +143,7 @@ def guardar_rutinas_nube():
                 pass
 
 def inicializar_estados():
-    sincronizar_desde_supabase()
-    
-    # Cargar plan de estudio y precargar los estados de los checkboxes en session_state
+    # 1. Descargar el plan de estudio y el progreso de la nube lo primero de todo
     if supabase:
         try:
             res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
@@ -156,16 +154,17 @@ def inicializar_estados():
                 if "progreso_estudio" not in st.session_state:
                     st.session_state.progreso_estudio = datos_nube.get("progreso", {})
                     
-                # Inyectar obligatoriamente en las keys de Streamlit al arrancar
+                # Inyectar inmediatamente en la sesión de Streamlit
                 for k, v in st.session_state.progreso_estudio.items():
                     st.session_state[k] = v
         except Exception:
             pass
-    
-    # ... (el resto de tus inicializaciones de rutinas, históricos, etc.)
 
+    sincronizar_desde_supabase()
+    
     if "mis_rutinas" not in st.session_state:
         st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
+    # ... (el resto de tus inicializaciones siguen igual)
     if "historico" not in st.session_state:
         st.session_state.historico = pd.read_csv(CSV_SIMULACROS).to_dict("records") if os.path.exists(CSV_SIMULACROS) else []
     if "historico_test_temas" not in st.session_state:
@@ -692,10 +691,9 @@ elif opcion == "📅 Plan de Estudio Personalizado":
         if "progreso_estudio" not in st.session_state:
             st.session_state.progreso_estudio = {}
 
-        # --- ASEGURAR QUE TODO LO GUARDADO ESTÁ EN LA SESIÓN AL ENTRAR AQUÍ ---
+        # REFUERZO: Inyectar todo el progreso guardado en las keys de Streamlit antes de pintar
         for k, v in st.session_state.progreso_estudio.items():
             st.session_state[k] = v
-        # ---------------------------------------------------------------------
 
         for sem in st.session_state.plan_estudio_json:
             with st.expander(f"Semana {sem.get('semana')}: {sem.get('objetivo', '')}", expanded=False):
@@ -705,7 +703,7 @@ elif opcion == "📅 Plan de Estudio Personalizado":
                     for t_idx, tarea in enumerate(d_info.get('tareas', [])):
                         key_check = f"chk_sem_{sem.get('semana')}_{dia_nombre}_{t_idx}"
                         
-                        # Si la clave no está creada aún en la sesión, la inicializamos
+                        # Asegurar clave individual
                         if key_check not in st.session_state:
                             st.session_state[key_check] = st.session_state.progreso_estudio.get(key_check, False)
 
