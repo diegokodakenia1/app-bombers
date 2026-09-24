@@ -964,87 +964,89 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             st.session_state.historial_carreras.append(nuevo_registro_carrera)
             guardar_carreras_nube()
             st.success("🎉 ¡Entrenamiento de carrera guardado y añadido al progreso con éxito!")
-# ------------------------------------------------------------------------------
-# AFEGIT: REGISTRE DE LES NOVES PROVES FÍSIQUES - BOMBERS GENERALITAT
-# ------------------------------------------------------------------------------
-st.markdown("### 🚒 Simulacre de les Noves Proves Oficials")
-tipo_prueba_oficial = st.selectbox(
-    "Selecciona la prova oficial a registrar:", 
-    [
-        "1. Intervenció Estructural (Circuit)", 
-        "2. Intervenció Forestal (Rectes + Slam Ball)", 
-        "3. Prova Aquàtica / Rescat (6 fases)"
-    ]
-)
 
-fecha_oficial = st.date_input("Data del simulacre:", value=datetime.date.today(), key="fecha_simulacre_oficial")
-
-if "1. Intervenció Estructural" in tipo_prueba_oficial:
-    st.info("Circuit continu: Transport de discos, Step-Up, kettlebells, arrossegament/empenta de trineu, obstacle, maniquí i esprint.")
-    c1, c2 = st.columns(2)
-    with c1:
-        temps_estructural = st.text_input("Temps total empleat (ej: 03:45):", value="03:45")
-    with c2:
-        penalitzacions_est = st.number_input("Segons de penalització (errors):", min_value=0, step=1, value=0)
-    
-    if st.button("💾 Guardar Registre Estructural"):
-        reg_est = {
-            "Data": str(fecha_oficial),
-            "Prova": "Intervenció Estructural",
-            "Temps/Marca": temps_estructural,
-            "Penalització (s)": penalitzacions_est
-        }
-        if "historial_proves_oficials" not in st.session_state:
-            st.session_state.historial_proves_oficials = []
-        st.session_state.historial_proves_oficials.append(reg_est)
-        st.success("🎉 ¡Simulacre estructural guardat correctament!")
-
-elif "2. Intervenció Forestal" in tipo_prueba_oficial:
-    st.info("Prova progressiva: Alterna desplaçaments de 20m amb llançaments de Slam Ball per blocs (8, 10 o 12 rectes).")
-    f1, f2 = st.columns(2)
-    with f1:
-        bloc_assolit = st.selectbox("Últim bloc completat:", ["Bloc 1 (8 rectes + 16 Slam Ball)", "Bloc 2 (10 rectes + 20 Slam Ball)", "Bloc 3 (12 rectes + 24 Slam Ball)"])
-    with f2:
-        temps_forestal = st.text_input("Temps total (ej: 02:30):", value="02:30")
-        
-    if st.button("💾 Guardar Registre Forestal"):
-        reg_for = {
-            "Data": str(fecha_oficial),
-            "Prova": f"Intervenció Forestal - {bloc_assolit}",
-            "Temps/Marca": temps_forestal,
-            "Penalització (s)": 0
-        }
-        if "historial_proves_oficials" not in st.session_state:
-            st.session_state.historial_proves_oficials = []
-        st.session_state.historial_proves_oficials.append(reg_for)
-        st.success("🎉 ¡Simulacre forestal guardat correctament!")
-
-else:
-    st.info("Prova Aquàtica de Rescat: Entrada, 15m apnea, 30s flotació, crol lliure, crol de salvament i remolc de maniquí (6 fases consecutives).")
-    a1, a2 = st.columns(2)
-    with a1:
-        temps_aigua = st.text_input("Temps total de la prova aquàtica (ej: 01:55):", value="01:55")
-    with a2:
-        fase_fallida = st.selectbox("Fase amb més dificultat o error:", ["Cap (Completat)", "Fase 1: Entrada", "Fase 2: Apnea 15m", "Fase 3: Flotació 30s", "Fase 4: Crol lliure", "Fase 5: Crol salvament", "Fase 6: Remolc maniquí"])
-
-    if st.button("💾 Guardar Registre Aquàtic"):
-        reg_aq = {
-            "Data": str(fecha_oficial),
-            "Prova": f"Aquàtica (Incidència: {fase_fallida})",
-            "Temps/Marca": temps_aigua,
-            "Penalització (s)": 0
-        }
-        if "historial_proves_oficials" not in st.session_state:
-            st.session_state.historial_proves_oficials = []
-        st.session_state.historial_proves_oficials.append(reg_aq)
-        st.success("🎉 ¡Registre aquàtic guardat correctament!")
-
-# Mostrar taula amb l'historial de simulacres oficials si existeix
-if st.session_state.get("historial_proves_oficials"):
+    # ------------------------------------------------------------------------------
+    # AFEGIT: REGISTRE DE LES NOVES PROVES FÍSIQUES - BOMBERS GENERALITAT
+    # ------------------------------------------------------------------------------
     st.markdown("---")
-    st.markdown("### 📋 Historial de Simulacres de les Noves Proves")
-    df_oficials = pd.DataFrame(st.session_state.historial_proves_oficials)
-    st.dataframe(df_oficials, use_container_width=True)
+    st.markdown("### 🚒 Simulacre de les Noves Proves Oficials")
+    tipo_prueba_oficial = st.selectbox(
+        "Selecciona la prova oficial a registrar:", 
+        [
+            "1. Intervenció Estructural (Circuit)",[cite: 3]
+            "2. Intervenció Forestal (Rectes + Slam Ball)",[cite: 3]
+            "3. Prova Aquàtica / Rescat (6 fases)"[cite: 4]
+        ]
+    )
+
+    fecha_oficial = st.date_input("Data del simulacre:", value=datetime.date.today(), key="fecha_simulacre_oficial")
+
+    if "1. Intervenció Estructural" in tipo_prueba_oficial:
+        st.info("Circuit continu: Transport de discos, Step-Up, kettlebells, arrossegament/empenta de trineu, obstacle, maniquí i esprint.")[cite: 3]
+        c1, c2 = st.columns(2)
+        with c1:
+            temps_estructural = st.text_input("Temps total empleat (ej: 03:45):", value="03:45")
+        with c2:
+            penalitzacions_est = st.number_input("Segons de penalització (errors):", min_value=0, step=1, value=0)
+        
+        if st.button("💾 Guardar Registre Estructural"):
+            reg_est = {
+                "Data": str(fecha_oficial),
+                "Prova": "Intervenció Estructural",[cite: 3]
+                "Temps/Marca": temps_estructural,
+                "Penalització (s)": penalitzacions_est
+            }
+            if "historial_proves_oficials" not in st.session_state:
+                st.session_state.historial_proves_oficials = []
+            st.session_state.historial_proves_oficials.append(reg_est)
+            st.success("🎉 ¡Simulacre estructural guardat correctament!")
+
+    elif "2. Intervenció Forestal" in tipo_prueba_oficial:
+        st.info("Prova progressiva: Alterna desplaçaments de 20m amb llançaments de Slam Ball per blocs (8, 10 o 12 rectes).")[cite: 3]
+        f1, f2 = st.columns(2)
+        with f1:
+            bloc_assolit = st.selectbox("Últim bloc completat:", ["Bloc 1 (8 rectes + 16 Slam Ball)", "Bloc 2 (10 rectes + 20 Slam Ball)", "Bloc 3 (12 rectes + 24 Slam Ball)"])
+        with f2:
+            temps_forestal = st.text_input("Temps total (ej: 02:30):", value="02:30")
+            
+        if st.button("💾 Guardar Registre Forestal"):
+            reg_for = {
+                "Data": str(fecha_oficial),
+                "Prova": f"Intervenció Forestal - {bloc_assolit}",[cite: 3]
+                "Temps/Marca": temps_forestal,
+                "Penalització (s)": 0
+            }
+            if "historial_proves_oficials" not in st.session_state:
+                st.session_state.historial_proves_oficials = []
+            st.session_state.historial_proves_oficials.append(reg_for)
+            st.success("🎉 ¡Simulacre forestal guardat correctament!")
+
+    else:
+        st.info("Prova Aquàtica de Rescat: Entrada, 15m apnea, 30s flotació, crol lliure, crol de salvament i remolc de maniquí (6 fases consecutives).")[cite: 4]
+        a1, a2 = st.columns(2)
+        with a1:
+            temps_aigua = st.text_input("Temps total de la prova aquàtica (ej: 01:55):", value="01:55")
+        with a2:
+            fase_fallida = st.selectbox("Fase amb més dificultat o error:", ["Cap (Completat)", "Fase 1: Entrada", "Fase 2: Apnea 15m", "Fase 3: Flotació 30s", "Fase 4: Crol lliure", "Fase 5: Crol salvament", "Fase 6: Remolc maniquí"])
+
+        if st.button("💾 Guardar Registre Aquàtic"):
+            reg_aq = {
+                "Data": str(fecha_oficial),
+                "Prova": f"Aquàtica (Incidència: {fase_fallida})",[cite: 4]
+                "Temps/Marca": temps_aigua,
+                "Penalització (s)": 0
+            }
+            if "historial_proves_oficials" not in st.session_state:
+                st.session_state.historial_proves_oficials = []
+            st.session_state.historial_proves_oficials.append(reg_aq)
+            st.success("🎉 ¡Registre aquàtic guardat correctament!")
+
+    # Mostrar taula amb l'historial de simulacres oficials si existeix
+    if st.session_state.get("historial_proves_oficials"):
+        st.markdown("---")
+        st.markdown("### 📋 Historial de Simulacres de les Noves Proves")
+        df_oficials = pd.DataFrame(st.session_state.historial_proves_oficials)
+        st.dataframe(df_oficials, use_container_width=True)
 # ------------------------------------------------------------------------------
 # 6. PLAN DE ESTUDIO
 # ------------------------------------------------------------------------------
