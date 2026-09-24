@@ -630,62 +630,104 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 st.success("🎉 ¡Entrenamiento guardado con éxito en la nube!")
 
     with t2:
-            st.subheader("Crea tus propias rutinas de entrenamiento")
+            st.subheader("Crea y gestiona tus rutinas de entrenamiento")
             
+            # Control de estado para saber si estamos editando una rutina existente
+            if "editando_rutina" not in st.session_state:
+                st.session_state.editando_rutina = None
+
+            # Si estamos editando, precargamos los valores
+            if st.session_state.editando_rutina:
+                rutina_a_editar = st.session_state.editando_rutina
+                def_nombre = rutina_a_editar
+                def_ejs = st.session_state.mis_rutinas.get(rutina_a_editar, [])
+                st.info(f"✏️ Editando rutina: **{rutina_a_editar}**")
+            else:
+                def_nombre = ""
+                def_ejs = []
+
             nombre_nueva_rutina = st.text_input(
-                "Nombre de la rutina (ej: Torso - Fuerza, Pierna Bombero):", 
+                "Nombre de la rutina:", 
+                value=def_nombre,
                 key="input_nombre_nueva_rutina"
             )
             lista_ejercicios = st.multiselect(
-                "Selecciona o añade los ejercicios que componen esta rutina (Catálogo Completo):",
+                "Selecciona los ejercicios que componen esta rutina (Catálogo Completo):",
                 LISTA_EJERCICIOS_HEAVY,
-                default=[],
+                default=def_ejs,
                 key="multiselect_nueva_rutina"
             )
             
-            if st.button("➕ Guardar Nueva Rutina", key="btn_guardar_nueva_rutina"):
-                if nombre_nueva_rutina and lista_ejercicios:
-                    st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
-                    
-                    try:
-                        json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
-                        try:
-                            supabase.storage.from_("temarios").remove(["datos/mis_rutinas.json"])
-                        except:
-                            pass
-                        
-                        supabase.storage.from_("temarios").upload(
-                            path="datos/mis_rutinas.json",
-                            file=json_bytes,
-                            file_options={"content-type": "application/json"}
-                        )
-                        st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada!")
-                        st.rerun()
-                    except Exception as e2:
-                        st.error(f"Error al guardar en la nube: {e2}")
+            col_b1, col_b2 = st.columns([0.8, 0.2])
+            with col_b1:
+                if st.session_state.editando_rutina:
+                    btn_texto = "💾 Guardar Cambios de la Rutina"
                 else:
-                    st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
+                    btn_texto = "➕ Guardar Nueva Rutina"
+
+                if st.button(btn_texto, key="btn_guardar_nueva_rutina"):
+                    if nombre_nueva_rutina and lista_ejercicios:
+                        # Si cambiamos el nombre al editar, borramos la clave antigua para que no se duplique
+                        old_name = st.session_state.editando_rutina
+                        if old_name and old_name != nombre_nueva_rutina and old_name in st.session_state.mis_rutinas:
+                            del st.session_state.mis_rutinas[old_name]
+
+                        # Guardamos/Actualizamos la rutina
+                        st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
+                        st.session_state.editando_rutina = None  # Salimos del modo edición
+                        
+                        try:
+                            json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
+                            try:
+                                supabase.storage.from_("temarios").remove(["datos/mis_rutinas.json"])
+                            except:
+                                pass
+                            
+                            supabase.storage.from_("temarios").upload(
+                                path="datos/mis_rutinas.json",
+                                file=json_bytes,
+                                file_options={"content-type": "application/json"}
+                            )
+                            st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada correctamente!")
+                            st.rerun()
+                        except Exception as e2:
+                            st.error(f"Error al guardar en la nube: {e2}")
+                    else:
+                        st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
+            
+            with col_b2:
+                if st.session_state.editando_rutina:
+                    if st.button("❌ Cancelar", key="cancelar_edicion"):
+                        st.session_state.editando_rutina = None
+                        st.rerun()
 
             if st.session_state.mis_rutinas:
                 st.markdown("---")
                 st.markdown("### Tus Rutinas Actuales:")
                 
-                # Usamos una copia de las keys para iterar seguros de no corromper el bucle
                 rutinas_keys = list(st.session_state.mis_rutinas.keys())
                 
                 for r_nombre in rutinas_keys:
                     r_ejs = st.session_state.mis_rutinas[r_nombre]
-                    c_r1, c_r2 = st.columns([0.8, 0.2])
+                    c_r1, c_r2, c_r3 = st.columns([0.65, 0.17, 0.18])
+                    
                     with c_r1: 
                         st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
+                    
                     with c_r2:
-                        # CLAVE ÚNICA E INVARIABLE: el propio nombre de la rutina sanitizado
-                        btn_key = f"btn_del_name_{r_nombre.strip().replace(' ', '_')}"
-                        if st.button("🗑️ Borrar", key=btn_key):
-                            # 1. Borramos del diccionario en local
+                        btn_edit_key = f"btn_edit_{r_nombre.strip().replace(' ', '_')}"
+                        if st.button("✏️ Editar", key=btn_edit_key):
+                            st.session_state.editando_rutina = r_nombre
+                            st.rerun()
+
+                    with c_r3:
+                        btn_del_key = f"btn_del_name_{r_nombre.strip().replace(' ', '_')}"
+                        if st.button("🗑️ Borrar", key=btn_del_key):
+                            if st.session_state.editando_rutina == r_nombre:
+                                st.session_state.editando_rutina = None
+                                
                             del st.session_state.mis_rutinas[r_nombre]
                             
-                            # 2. Actualizamos la nube borrando y subiendo el JSON limpio
                             try:
                                 json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
                                 try:
