@@ -145,6 +145,19 @@ def guardar_rutinas_nube():
 def inicializar_estados():
     sincronizar_desde_supabase()
     
+    # Cargar plan de estudio desde Supabase si existe
+    if supabase:
+        try:
+            res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
+            if res_bytes:
+                datos_nube = json.loads(res_bytes.decode("utf-8"))
+                if "plan_estudio_json" not in st.session_state:
+                    st.session_state.plan_estudio_json = datos_nube.get("plan_json", [])
+                if "progreso_estudio" not in st.session_state:
+                    st.session_state.progreso_estudio = datos_nube.get("progreso", {})
+        except Exception:
+            pass
+
     if "mis_rutinas" not in st.session_state:
         st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
     if "historico" not in st.session_state:
@@ -210,19 +223,26 @@ def guardar_banco_fallos_disco():
             except Exception:
                 pass
 def guardar_plan_nube():
-    """Guarda el plan y el progreso actual en Supabase."""
-    try:
-        # Asegúrate de que 'supabase' es tu cliente inicializado (ej: supabase = create_client(...))
-        if 'supabase' in globals() or 'supabase' in locals():
-            datos_a_guardar = {
-                "user_id": "usuario_principal",  # O el identificador que uses
+    if supabase:
+        try:
+            datos_plan = {
                 "plan_json": st.session_state.get("plan_estudio_json", []),
                 "progreso": st.session_state.get("progreso_estudio", {})
             }
-            # Cambia "planes_estudio" por el nombre exacto de tu tabla en Supabase
-            supabase.table("planes_estudio").upsert(datos_a_guardar).execute()
-    except Exception as e:
-        st.error(f"Error al sincronizar con la nube: {e}")
+            json_bytes = json.dumps(datos_plan).encode("utf-8")
+            supabase.storage.from_("temarios").upload(
+                path="datos/plan_estudio.json", file=json_bytes,
+                file_options={"content-type": "application/json", "upsert": "true"}
+            )
+        except Exception:
+            try:
+                json_bytes = json.dumps(datos_plan).encode("utf-8")
+                supabase.storage.from_("temarios").update(
+                    path="datos/plan_estudio.json", file=json_bytes,
+                    file_options={"content-type": "application/json"}
+                )
+            except Exception as e:
+                pass
 
 def guardar_flashcards_disco():
     if st.session_state.flashcards:
