@@ -700,19 +700,19 @@ elif opcion == "📅 Plan de Estudio Personalizado":
                     for t_idx, tarea in enumerate(d_info.get('tareas', [])):
                         key_check = f"chk_sem_{sem.get('semana')}_{dia_nombre}_{t_idx}"
                         
-                        # 1. Asegurar que el estado inicial en Streamlit coincide con lo que tenemos guardado
+                        # Si la clave no existe en la sesión, la recuperamos del diccionario de progreso
                         if key_check not in st.session_state:
                             st.session_state[key_check] = st.session_state.progreso_estudio.get(key_check, False)
-                        
-                        # 2. Definir una función callback para que se guarde el cambio de forma inmediata
-                        def actualizar_progreso(k=key_check):
+
+                        # Función para sincronizar al vuelo
+                        def actualizar_checkbox(k=key_check):
                             st.session_state.progreso_estudio[k] = st.session_state[k]
                             guardar_plan_nube()
 
-                        # 3. Pintar el checkbox vinculado al callback
-                        st.checkbox(tarea, key=key_check, on_change=actualizar_progreso)
-                            
-                st.markdown("")
+                        # Renderizamos el checkbox vinculado a su key y al callback
+                        st.checkbox(tarea, key=key_check, on_change=actualizar_checkbox)
+                        
+                    st.markdown("")
 
     elif "plan_estudio_texto_raw" in st.session_state and st.session_state.plan_estudio_texto_raw:
         st.markdown("---")
