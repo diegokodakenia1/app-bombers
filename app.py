@@ -235,18 +235,20 @@ def guardar_plan_nube():
             }
             json_bytes = json.dumps(datos_plan).encode("utf-8")
             supabase.storage.from_("temarios").upload(
-                path="datos/plan_estudio.json", file=json_bytes,
+                path="datos/plan_estudio.json", 
+                file=json_bytes,
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
         except Exception:
             try:
                 json_bytes = json.dumps(datos_plan).encode("utf-8")
                 supabase.storage.from_("temarios").update(
-                    path="datos/plan_estudio.json", file=json_bytes,
+                    path="datos/plan_estudio.json", 
+                    file=json_bytes,
                     file_options={"content-type": "application/json"}
                 )
             except Exception as e:
-                pass
+                st.error(f"Error al guardar en la nube: {e}")
 
 def guardar_flashcards_disco():
     if st.session_state.flashcards:
