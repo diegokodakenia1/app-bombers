@@ -42,6 +42,52 @@ supabase = init_supabase()
 if "mis_rutinas" not in st.session_state:
     st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
 
+# Cargar tu historial de marcas del gimnasio desde Supabase
+if "historial_marcas" not in st.session_state:
+    try:
+        res_m = supabase.storage.from_("temarios").download("datos/historial_marcas.json")
+        st.session_state.historial_marcas = json.loads(res_m.decode("utf-8"))
+    except:
+        st.session_state.historial_marcas = []
+
+def guardar_marcas_nube():
+    try:
+        json_bytes = json.dumps(st.session_state.historial_marcas, ensure_ascii=False).encode("utf-8")
+        try:
+            supabase.storage.from_("temarios").remove(["datos/historial_marcas.json"])
+        except:
+            pass
+        supabase.storage.from_("temarios").upload(
+            path="datos/historial_marcas.json",
+            file=json_bytes,
+            file_options={"content-type": "application/json"}
+        )
+    except Exception as e:
+        st.error(f"Error al guardar marcas en la nube: {e}")
+
+# Cargar historial de carreras desde Supabase al iniciar
+if "historial_carreras" not in st.session_state:
+    try:
+        res_hc = supabase.storage.from_("temarios").download("datos/historial_carreras.json")
+        st.session_state.historial_carreras = json.loads(res_hc.decode("utf-8"))
+    except:
+        st.session_state.historial_carreras = []
+
+def guardar_carreras_nube():
+    try:
+        json_bytes = json.dumps(st.session_state.historial_carreras, ensure_ascii=False).encode("utf-8")
+        try:
+            supabase.storage.from_("temarios").remove(["datos/historial_carreras.json"])
+        except:
+            pass
+        supabase.storage.from_("temarios").upload(
+            path="datos/historial_carreras.json",
+            file=json_bytes,
+            file_options={"content-type": "application/json"}
+        )
+    except Exception as e:
+        st.error(f"Error al guardar historial de carreras en la nube: {e}")
+
 # Carga de la API Key de Gemini
 api_key = None
 try:
@@ -61,6 +107,7 @@ if not api_key:
 
 client = genai.Client(api_key=api_key) if api_key else None
 MODELO_IA = "gemini-3.6-flash"
+
 # Archivos locales de respaldo
 CSV_SIMULACROS = "historial_simulacros.csv"
 CSV_TEST_TEMAS = "historial_test_temas.csv"
@@ -593,7 +640,7 @@ elif opcion == "💡 Preguntas de Repaso":
 # ------------------------------------------------------------------------------
 elif opcion == "🏋️‍♂️ Preparación Física":
     st.header("🏋️‍♂️ Preparación Física & Progreso")
-    t1, t2, t3 = st.tabs(["🏋️‍♂️ Entrenar Rutina", "➕ Crear / Gestionar Rutinas", "📈 Gráficas de Progreso"])
+    t1, t2, t3, t4 = st.tabs(["🏋️‍♂️ Entrenar Rutina", "➕ Crear / Gestionar Rutinas", "📈 Gráficas de Progreso", "🏃‍♂️ Entrenamientos de Carrera"])
     
     with t1:
         if not st.session_state.mis_rutinas:
@@ -630,44 +677,104 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 st.success("🎉 ¡Entrenamiento guardado con éxito en la nube!")
 
     with t2:
-            st.subheader("Crea y gestiona tus rutinas de entrenamiento")
-            
-            # 1. Inicializamos el estado si no existe
-            if "editando_rutina" not in st.session_state:
-                st.session_state.editando_rutina = None
-            if "form_nombre_rutina" not in st.session_state:
-                st.session_state.form_nombre_rutina = ""
-            if "form_ejs_rutina" not in st.session_state:
-                st.session_state.form_ejs_rutina = []
+        st.subheader("Crea y gestiona tus rutinas de entrenamiento")
+        
+        if "editando_rutina" not in st.session_state:
+            st.session_state.editando_rutina = None
+        if "form_nombre_rutina" not in st.session_state:
+            st.session_state.form_nombre_rutina = ""
+        if "form_ejs_rutina" not in st.session_state:
+            st.session_state.form_ejs_rutina = []
 
-            rutina_en_edicion = st.session_state.editando_rutina
+        rutina_en_edicion = st.session_state.editando_rutina
 
+        if rutina_en_edicion:
+            st.info(f"✏️ Estás editando la rutina: **{rutina_en_edicion}**. Modifica el nombre o añade/quita ejercicios y guarda los cambios.")
+
+        nombre_nueva_rutina = st.text_input(
+            "Nombre de la rutina:", 
+            value=st.session_state.form_nombre_rutina
+        )
+        
+        lista_ejercicios = st.multiselect(
+            "Selecciona o deselecciona ejercicios:",
+            LISTA_EJERCICIOS_HEAVY,
+            default=st.session_state.form_ejs_rutina
+        )
+        
+        col_b1, col_b2 = st.columns([0.8, 0.2])
+        with col_b1:
+            btn_texto = "💾 Guardar Cambios de la Rutina" if rutina_en_edicion else "➕ Guardar Nueva Rutina"
+
+            if st.button(btn_texto, key="btn_guardar_rutina_accion"):
+                if nombre_nueva_rutina and lista_ejercicios:
+                    if rutina_en_edicion and rutina_en_edicion != nombre_nueva_rutina:
+                        if rutina_en_edicion in st.session_state.mis_rutinas:
+                            del st.session_state.mis_rutinas[rutina_en_edicion]
+
+                    st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
+                    
+                    try:
+                        json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
+                        try:
+                            supabase.storage.from_("temarios").remove(["datos/mis_rutinas.json"])
+                        except:
+                            pass
+                        
+                        supabase.storage.from_("temarios").upload(
+                            path="datos/mis_rutinas.json",
+                            file=json_bytes,
+                            file_options={"content-type": "application/json"}
+                        )
+                        
+                        st.session_state.editando_rutina = None
+                        st.session_state.form_nombre_rutina = ""
+                        st.session_state.form_ejs_rutina = []
+                        
+                        st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada y sincronizada con éxito!")
+                        st.rerun()
+                    except Exception as e2:
+                        st.error(f"Error al guardar en la nube: {e2}")
+                else:
+                    st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
+        
+        with col_b2:
             if rutina_en_edicion:
-                st.info(f"✏️ Estás editando la rutina: **{rutina_en_edicion}**. Modifica el nombre o añade/quita ejercicios y guarda los cambios.")
+                if st.button("❌ Cancelar", key="cancelar_edicion_rutina"):
+                    st.session_state.editando_rutina = None
+                    st.session_state.form_nombre_rutina = ""
+                    st.session_state.form_ejs_rutina = []
+                    st.rerun()
 
-            # 2. Inputs SIN 'key' fija para que acepten los valores de edición dinámicamente
-            nombre_nueva_rutina = st.text_input(
-                "Nombre de la rutina:", 
-                value=st.session_state.form_nombre_rutina
-            )
+        if st.session_state.mis_rutinas:
+            st.markdown("---")
+            st.markdown("### Tus Rutinas Actuales:")
             
-            lista_ejercicios = st.multiselect(
-                "Selecciona o deselecciona ejercicios:",
-                LISTA_EJERCICIOS_HEAVY,
-                default=st.session_state.form_ejs_rutina
-            )
+            rutinas_keys = list(st.session_state.mis_rutinas.keys())
             
-            col_b1, col_b2 = st.columns([0.8, 0.2])
-            with col_b1:
-                btn_texto = "💾 Guardar Cambios de la Rutina" if rutina_en_edicion else "➕ Guardar Nueva Rutina"
+            for i, r_nombre in enumerate(rutinas_keys):
+                r_ejs = st.session_state.mis_rutinas[r_nombre]
+                c_r1, c_r2, c_r3 = st.columns([0.65, 0.17, 0.18])
+                
+                with c_r1: 
+                    st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
+                
+                with c_r2:
+                    if st.button("✏️ Editar", key=f"edit_rutina_idx_{i}"):
+                        st.session_state.editando_rutina = r_nombre
+                        st.session_state.form_nombre_rutina = r_nombre
+                        st.session_state.form_ejs_rutina = r_ejs
+                        st.rerun()
 
-                if st.button(btn_texto, key="btn_guardar_rutina_accion"):
-                    if nombre_nueva_rutina and lista_ejercicios:
-                        if rutina_en_edicion and rutina_en_edicion != nombre_nueva_rutina:
-                            if rutina_en_edicion in st.session_state.mis_rutinas:
-                                del st.session_state.mis_rutinas[rutina_en_edicion]
-
-                        st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
+                with c_r3:
+                    if st.button("🗑️ Borrar", key=f"del_rutina_idx_{i}"):
+                        if st.session_state.editando_rutina == r_nombre:
+                            st.session_state.editando_rutina = None
+                            st.session_state.form_nombre_rutina = ""
+                            st.session_state.form_ejs_rutina = []
+                            
+                        if r_nombre in st.session_state.mis_rutinas:
+                            del st.session_state.mis_rutinas[r_nombre]
                         
                         try:
                             json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
@@ -681,84 +788,64 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                                 file=json_bytes,
                                 file_options={"content-type": "application/json"}
                             )
-                            
-                            # Reseteamos todo tras guardar con éxito
-                            st.session_state.editando_rutina = None
-                            st.session_state.form_nombre_rutina = ""
-                            st.session_state.form_ejs_rutina = []
-                            
-                            st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada y sincronizada con éxito!")
+                            st.success(f"Rutina '{r_nombre}' eliminada correctamente.")
                             st.rerun()
-                        except Exception as e2:
-                            st.error(f"Error al guardar en la nube: {e2}")
-                    else:
-                        st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
-            
-            with col_b2:
-                if rutina_en_edicion:
-                    if st.button("❌ Cancelar", key="cancelar_edicion_rutina"):
-                        st.session_state.editando_rutina = None
-                        st.session_state.form_nombre_rutina = ""
-                        st.session_state.form_ejs_rutina = []
-                        st.rerun()
+                        except Exception as e_del:
+                            st.error(f"Error al actualizar la nube: {e_del}")
 
-            if st.session_state.mis_rutinas:
-                st.markdown("---")
-                st.markdown("### Tus Rutinas Actuales:")
-                
-                rutinas_keys = list(st.session_state.mis_rutinas.keys())
-                
-                for i, r_nombre in enumerate(rutinas_keys):
-                    r_ejs = st.session_state.mis_rutinas[r_nombre]
-                    c_r1, c_r2, c_r3 = st.columns([0.65, 0.17, 0.18])
-                    
-                    with c_r1: 
-                        st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
-                    
-                    with c_r2:
-                        if st.button("✏️ Editar", key=f"edit_rutina_idx_{i}"):
-                            # 3. Al pulsar editar, cargamos los datos en el estado y forzamos recarga
-                            st.session_state.editando_rutina = r_nombre
-                            st.session_state.form_nombre_rutina = r_nombre
-                            st.session_state.form_ejs_rutina = r_ejs
-                            st.rerun()
-
-                    with c_r3:
-                        if st.button("🗑️ Borrar", key=f"del_rutina_idx_{i}"):
-                            if st.session_state.editando_rutina == r_nombre:
-                                st.session_state.editando_rutina = None
-                                st.session_state.form_nombre_rutina = ""
-                                st.session_state.form_ejs_rutina = []
-                                
-                            if r_nombre in st.session_state.mis_rutinas:
-                                del st.session_state.mis_rutinas[r_nombre]
-                            
-                            try:
-                                json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
-                                try:
-                                    supabase.storage.from_("temarios").remove(["datos/mis_rutinas.json"])
-                                except:
-                                    pass
-                                
-                                supabase.storage.from_("temarios").upload(
-                                    path="datos/mis_rutinas.json",
-                                    file=json_bytes,
-                                    file_options={"content-type": "application/json"}
-                                )
-                                st.success(f"Rutina '{r_nombre}' eliminada correctamente.")
-                                st.rerun()
-                            except Exception as e_del:
-                                st.error(f"Error al actualizar la nube: {e_del}")
     with t3:
-        if st.session_state.get("historial_marcas"):
-            df_marcas = pd.DataFrame(st.session_state.historial_marcas)
-            ejercicio_grafico = st.selectbox("Selecciona ejercicio para ver evolución de peso:", df_marcas["Ejercicio"].unique())
-            df_filtrado = df_marcas[df_marcas["Ejercicio"] == ejercicio_grafico]
-            st.line_chart(df_filtrado.set_index("Fecha")[["Peso (kg)"]])
-            st.dataframe(df_filtrado, use_container_width=True)
-        else:
-            st.info("Todavía no hay registros de entrenamientos guardados.")
+        st.subheader("📈 Gráficas de Progreso")
+        
+        tipo_progreso = st.radio("Selecciona el tipo de progreso a visualizar:", ["🏋️‍♂️ Fuerza (Gym)", "🏃‍♂️ Carrera"], horizontal=True)
+        
+        if tipo_progreso == "🏋️‍♂️ Fuerza (Gym)":
+            if st.session_state.get("historial_marcas"):
+                df_marcas = pd.DataFrame(st.session_state.historial_marcas)
+                ejercicio_grafico = st.selectbox("Selecciona ejercicio para ver evolución de peso:", df_marcas["Ejercicio"].unique())
+                df_filtrado = df_marcas[df_marcas["Ejercicio"] == ejercicio_grafico]
+                st.line_chart(df_filtrado.set_index("Fecha")[["Peso (kg)"]])
+                st.dataframe(df_filtrado, use_container_width=True)
+            else:
+                st.info("Todavía no hay registros de entrenamientos de fuerza guardados.")
+        
+        else:  # Carrera
+            if st.session_state.get("historial_carreras"):
+                df_carreras = pd.DataFrame(st.session_state.historial_carreras)
+                st.markdown("#### 📊 Evolución de Kilómetros por Sesión")
+                st.line_chart(df_carreras.set_index("Fecha")[["Kilómetros (km)"]])
+                st.markdown("#### 📋 Historial Completo de Carrera")
+                st.dataframe(df_carreras, use_container_width=True)
+            else:
+                st.info("Todavía no hay registros de entrenamientos de carrera guardados.")
 
+    with t4:
+        st.subheader("🏃‍♂️ Registrar Entrenamiento de Carrera")
+
+        fecha_carrera = st.date_input("Fecha de la carrera:", value=datetime.date.today(), key="fecha_carrera_input")
+        
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            tipo_carrera = st.text_input("Tipo de entreno / Nombre (ej: Series 400m, Rodaje Suave):", value="Rodaje Suave")
+            n_series = st.number_input("Cantidad de series (0 si es continuo):", min_value=0, step=1, value=0)
+            km_totales = st.number_input("Kilómetros totales (km):", min_value=0.0, step=0.1, value=5.0)
+        
+        with col_c2:
+            tiempo_total = st.text_input("Tiempo total (ej: 25:00):", value="25:00")
+            ritmo_medio = st.text_input("Ritmo medio (ej: 4:30 min/km):", value="5:00")
+
+        if st.button("💾 Guardar Entrenamiento de Carrera y Progreso"):
+            nuevo_registro_carrera = {
+                "Fecha": str(fecha_carrera),
+                "Entreno": tipo_carrera,
+                "Series": n_series,
+                "Kilómetros (km)": km_totales,
+                "Tiempo": tiempo_total,
+                "Ritmo": ritmo_medio
+            }
+            
+            st.session_state.historial_carreras.append(nuevo_registro_carrera)
+            guardar_carreras_nube()
+            st.success("🎉 ¡Entrenamiento de carrera guardado y añadido al progreso con éxito!")
 # ------------------------------------------------------------------------------
 # 6. PLAN DE ESTUDIO
 # ------------------------------------------------------------------------------
