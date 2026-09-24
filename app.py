@@ -640,39 +640,40 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             if rutina_en_edicion and rutina_en_edicion in st.session_state.mis_rutinas:
                 def_nombre = rutina_en_edicion
                 def_ejs = st.session_state.mis_rutinas[rutina_en_edicion]
-                st.info(f"✏️ Estás editando la rutina: **{rutina_en_edicion}**. Modifica el nombre o añade/quita ejercicios directamente en el selector.")
+                st.info(f"✏️ Estás editando la rutina: **{rutina_en_edicion}**. Modifica el nombre o añade/quita ejercicios y guarda los cambios.")
             else:
                 def_nombre = ""
                 def_ejs = []
 
-            key_sufijo = f"_{rutina_en_edicion}" if rutina_en_edicion else "_nueva"
-
+            # Campos de entrada de datos
             nombre_nueva_rutina = st.text_input(
                 "Nombre de la rutina:", 
                 value=def_nombre,
-                key=f"input_nombre{key_sufijo}"
+                key="input_nombre_rutina_main"
             )
             
             lista_ejercicios = st.multiselect(
-                "Selecciona o deselecciona ejercicios (los actuales ya vienen marcados):",
+                "Selecciona o deselecciona ejercicios:",
                 LISTA_EJERCICIOS_HEAVY,
                 default=def_ejs,
-                key=f"multiselect_ejercicios{key_sufijo}"
+                key="multiselect_ejercicios_main"
             )
             
             col_b1, col_b2 = st.columns([0.8, 0.2])
             with col_b1:
                 btn_texto = "💾 Guardar Cambios de la Rutina" if rutina_en_edicion else "➕ Guardar Nueva Rutina"
 
-                if st.button(btn_texto, key="btn_guardar_nueva_rutina_fixed"):
+                if st.button(btn_texto, key="btn_guardar_rutina_accion"):
                     if nombre_nueva_rutina and lista_ejercicios:
+                        # 1. Si estábamos editando y cambiamos el nombre, borramos la clave vieja
                         if rutina_en_edicion and rutina_en_edicion != nombre_nueva_rutina:
                             if rutina_en_edicion in st.session_state.mis_rutinas:
                                 del st.session_state.mis_rutinas[rutina_en_edicion]
 
+                        # 2. Actualizamos el diccionario en memoria
                         st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
-                        st.session_state.editando_rutina = None
                         
+                        # 3. Guardamos en Supabase de forma estricta
                         try:
                             json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
                             try:
@@ -685,7 +686,10 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                                 file=json_bytes,
                                 file_options={"content-type": "application/json"}
                             )
-                            st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada correctamente!")
+                            
+                            # 4. Reseteamos el modo edición solo al completarse con éxito
+                            st.session_state.editando_rutina = None
+                            st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada y sincronizada con éxito!")
                             st.rerun()
                         except Exception as e2:
                             st.error(f"Error al guardar en la nube: {e2}")
@@ -712,22 +716,18 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                         st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
                     
                     with c_r2:
-                        # Clave única garantizada con prefijo numérico estricto
                         if st.button("✏️ Editar", key=f"edit_rutina_idx_{i}"):
                             st.session_state.editando_rutina = r_nombre
                             st.rerun()
 
                     with c_r3:
                         if st.button("🗑️ Borrar", key=f"del_rutina_idx_{i}"):
-                            # Si estábamos editando justo esta rutina, cancelamos el modo edición
                             if st.session_state.editando_rutina == r_nombre:
                                 st.session_state.editando_rutina = None
                                 
-                            # Eliminamos del diccionario local
                             if r_nombre in st.session_state.mis_rutinas:
                                 del st.session_state.mis_rutinas[r_nombre]
                             
-                            # Actualizamos Supabase inmediatamente
                             try:
                                 json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
                                 try:
