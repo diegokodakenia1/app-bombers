@@ -626,21 +626,20 @@ elif opcion == "🎯 Test por Temas":
     if "textos_pdfs_temario" not in st.session_state:
         st.session_state.textos_pdfs_temario = {}
 
-    # Botón de sincronización manual para verificar y cargar desde Supabase
+    # Botón de sincronización manual para la carpeta 'temarios'
     if st.button("🔄 Sincronizar PDFs desde Supabase"):
         try:
-            # Listar archivos en la raíz del bucket 'temarios'
-            archivos_nube = supabase.storage.from_("temarios").list()
-            
-            # Mensaje de depuración temporal para ver qué devuelve Supabase
-            st.write("Contenido detectado en el bucket:", archivos_nube)
+            # Listar los archivos dentro de la carpeta 'temarios' del bucket
+            archivos_nube = supabase.storage.from_("temarios").list("temarios")
             
             contador = 0
             for archivo in archivos_nube:
                 nombre_archivo = archivo.get("name") if isinstance(archivo, dict) else getattr(archivo, "name", None)
                 
                 if nombre_archivo and nombre_archivo.endswith(".pdf"):
-                    pdf_bytes = supabase.storage.from_("temarios").download(nombre_archivo)
+                    # Descargar indicando la ruta completa dentro del bucket
+                    ruta_archivo = f"temarios/{nombre_archivo}"
+                    pdf_bytes = supabase.storage.from_("temarios").download(ruta_archivo)
                     lector = pypdf.PdfReader(io.BytesIO(pdf_bytes))
                     texto_completo = ""
                     for pagina in lector.pages:
@@ -651,10 +650,10 @@ elif opcion == "🎯 Test por Temas":
                     contador += 1
             
             if contador > 0:
-                st.success(f"¡Se han cargado {contador} PDFs correctamente!")
+                st.success(f"¡Se han cargado {contador} PDFs correctamente desde la carpeta 'temarios'!")
                 st.rerun()
             else:
-                st.warning("No se encontraron archivos PDF en la raíz del bucket de Supabase.")
+                st.warning("No se encontraron archivos PDF dentro de la carpeta 'temarios'.")
         except Exception as e:
             st.error(f"Error al sincronizar con Supabase: {e}")
 
