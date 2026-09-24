@@ -626,10 +626,42 @@ elif opcion == "🎯 Test por Temas":
     if "textos_pdfs_temario" not in st.session_state:
         st.session_state.textos_pdfs_temario = {}
 
+    # Botón de sincronización manual para verificar y cargar desde Supabase
+    if st.button("🔄 Sincronizar PDFs desde Supabase"):
+        try:
+            # Listar archivos en la raíz del bucket 'temarios'
+            archivos_nube = supabase.storage.from_("temarios").list()
+            
+            # Mensaje de depuración temporal para ver qué devuelve Supabase
+            st.write("Contenido detectado en el bucket:", archivos_nube)
+            
+            contador = 0
+            for archivo in archivos_nube:
+                nombre_archivo = archivo.get("name") if isinstance(archivo, dict) else getattr(archivo, "name", None)
+                
+                if nombre_archivo and nombre_archivo.endswith(".pdf"):
+                    pdf_bytes = supabase.storage.from_("temarios").download(nombre_archivo)
+                    lector = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+                    texto_completo = ""
+                    for pagina in lector.pages:
+                        texto_extraido = pagina.extract_text()
+                        if texto_extraido:
+                            texto_completo += texto_extraido + "\n"
+                    st.session_state.textos_pdfs_temario[nombre_archivo] = texto_completo
+                    contador += 1
+            
+            if contador > 0:
+                st.success(f"¡Se han cargado {contador} PDFs correctamente!")
+                st.rerun()
+            else:
+                st.warning("No se encontraron archivos PDF en la raíz del bucket de Supabase.")
+        except Exception as e:
+            st.error(f"Error al sincronizar con Supabase: {e}")
+
     docs = list(st.session_state.textos_pdfs_temario.keys())
 
     if not docs:
-        st.warning("Sube PDFs en la Biblioteca.")
+        st.warning("Sube PDFs en la Biblioteca o pulsa el botón de arriba para sincronizar con la nube.")
     else:
         # Seleccionar tema para el test
         tema_sel = st.selectbox("Selecciona un documento/tema:", docs)
