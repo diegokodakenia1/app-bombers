@@ -692,6 +692,11 @@ elif opcion == "📅 Plan de Estudio Personalizado":
         if "progreso_estudio" not in st.session_state:
             st.session_state.progreso_estudio = {}
 
+        # --- ASEGURAR QUE TODO LO GUARDADO ESTÁ EN LA SESIÓN AL ENTRAR AQUÍ ---
+        for k, v in st.session_state.progreso_estudio.items():
+            st.session_state[k] = v
+        # ---------------------------------------------------------------------
+
         for sem in st.session_state.plan_estudio_json:
             with st.expander(f"Semana {sem.get('semana')}: {sem.get('objetivo', '')}", expanded=False):
                 for d_info in sem.get('dias', []):
@@ -700,16 +705,14 @@ elif opcion == "📅 Plan de Estudio Personalizado":
                     for t_idx, tarea in enumerate(d_info.get('tareas', [])):
                         key_check = f"chk_sem_{sem.get('semana')}_{dia_nombre}_{t_idx}"
                         
-                        # Si la clave no existe en la sesión, la recuperamos del diccionario de progreso
+                        # Si la clave no está creada aún en la sesión, la inicializamos
                         if key_check not in st.session_state:
                             st.session_state[key_check] = st.session_state.progreso_estudio.get(key_check, False)
 
-                        # Función para sincronizar al vuelo
                         def actualizar_checkbox(k=key_check):
                             st.session_state.progreso_estudio[k] = st.session_state[k]
                             guardar_plan_nube()
 
-                        # Renderizamos el checkbox vinculado a su key y al callback
                         st.checkbox(tarea, key=key_check, on_change=actualizar_checkbox)
                         
                     st.markdown("")
