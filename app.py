@@ -145,7 +145,7 @@ def guardar_rutinas_nube():
 def inicializar_estados():
     sincronizar_desde_supabase()
     
-    # Cargar plan de estudio desde Supabase si existe y sincronizar los checkboxes
+    # Cargar plan de estudio y precargar los estados de los checkboxes en session_state
     if supabase:
         try:
             res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
@@ -156,11 +156,13 @@ def inicializar_estados():
                 if "progreso_estudio" not in st.session_state:
                     st.session_state.progreso_estudio = datos_nube.get("progreso", {})
                     
-                    # INYECCIÓN CLAVE: Precargar el estado en la sesión de Streamlit para que los checkboxes recuerden si estaban marcados
-                    for k, v in st.session_state.progreso_estudio.items():
-                        st.session_state[k] = v
+                # Inyectar obligatoriamente en las keys de Streamlit al arrancar
+                for k, v in st.session_state.progreso_estudio.items():
+                    st.session_state[k] = v
         except Exception:
             pass
+    
+    # ... (el resto de tus inicializaciones de rutinas, históricos, etc.)
 
     if "mis_rutinas" not in st.session_state:
         st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
