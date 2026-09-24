@@ -682,18 +682,31 @@ elif opcion == "🎯 Test por Temas":
 elif opcion == "💡 Preguntas de Repaso":
     st.header("💡 Preguntas de Repaso Rápido")
     modo = st.radio("Modo:", ["🎯 Repaso de mis Fallos", "🎲 Repaso Aleatorio"])
+    
     if "Fallos" in modo:
         if not st.session_state.banco_fallos: 
             st.info("No hay fallos registrados aún.")
         else:
-            if st.button("🚀 Iniciar Repaso de Fallos"):
-                banco_txt = "".join([f"\nPregunta: {f['enunciado']}\nCorrecta: {f['correcta']}\n" for f in st.session_state.banco_fallos])
-                resp = generar_con_reintento(f"Crea un test con estas preguntas que fallé anteriormente: {banco_txt}")
-                if resp: 
-                    st.session_state.repaso_fallos_activo = resp.text
+            st.success(f"Tienes {len(st.session_state.banco_fallos)} preguntas guardadas de tus fallos anteriores.")
+            # AQUÍ EL CAMBIO: Ya no llamamos a 'generar_con_reintento'. 
+            # Mostramos directamente el banco de fallos en formato interactivo local.
+            if st.button("🚀 Cargar Repaso de Mis Fallos"):
+                # Convertimos tu banco de fallos directamente en el formato que lee tu renderizador
+                texto_banco_local = ""
+                for i, f in enumerate(st.session_state.banco_fallos, 1):
+                    texto_banco_local += f"\nPregunta {i}: {f.get('enunciado')}\n"
+                    for opcion_letra in ['A', 'B', 'C', 'D']:
+                        if f.get(opcion_letra):
+                            texto_banco_local += f"- {opcion_letra}) {f[opcion_letra]}\n"
+                    texto_banco_local += f"Respuesta Correcta: {f.get('correcta')}\n"
+                
+                st.session_state.repaso_fallos_activo = texto_banco_local
+
             if "repaso_fallos_activo" in st.session_state:
-                renderizar_test_interactivo(st.session_state.repaso_fallos_activo, "repaso_fallos", nombre_tema="Repaso de Fallos")
+                renderizar_test_interactivo(st.session_state.repaso_fallos_activo, "repaso_fallos", nombre_tema="Repaso de Mis Fallos")
+                
     else:
+        # El repaso aleatorio sí usa la IA porque necesita inventar preguntas nuevas desde cero
         if st.button("🚀 Generar Repaso Aleatorio"):
             resp = generar_con_reintento("Genera 10 preguntas de repaso general tipo test para Bombers.")
             if resp: 
