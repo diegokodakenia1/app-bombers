@@ -698,10 +698,14 @@ elif opcion == "📅 Plan de Estudio Personalizado":
                     for t_idx, tarea in enumerate(d_info.get('tareas', [])):
                         key_check = f"chk_sem_{sem.get('semana')}_{dia_nombre}_{t_idx}"
                         
-                        # El checkbox lee y escribe directamente en su key de Streamlit sin 'value' cruzado
+                        # 1. Aseguramos que la key de Streamlit tenga el valor guardado antes de pintar el checkbox
+                        if key_check not in st.session_state:
+                            st.session_state[key_check] = st.session_state.progreso_estudio.get(key_check, False)
+                        
+                        # 2. Pintamos el checkbox usando su key nativa
                         completado = st.checkbox(tarea, key=key_check)
                         
-                        # Si el estado actual difiere de lo que teníamos guardado, actualizamos y guardamos en la nube
+                        # 3. Si cambia el estado, actualizamos el diccionario y guardamos en la nube
                         if st.session_state.progreso_estudio.get(key_check, False) != completado:
                             st.session_state.progreso_estudio[key_check] = completado
                             guardar_plan_nube()
