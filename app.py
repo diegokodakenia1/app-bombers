@@ -244,12 +244,6 @@ LISTA_EJERCICIOS_HEAVY = [
     "Battle Ropes (Cuerdas de batalla)", "Sled Push / Sled Pull (Arrastre y empuje de trineo de fuerza)"
 ]
 
-def limpiar_nombre_archivo(nombre):
-    nfkd_form = unicodedata.normalize('NFKD', nombre)
-    solo_ascii = "".join([c for c in nfkd_form if not unicodedata.combining(c)])
-    limpio = re.sub(r'[^a-zA-Z0-9_\.-]', '_', solo_ascii)
-    return limpio
-
 def generar_con_reintento(prompt_texto, intentos=6, espera=5):
     if client is None:
         return None
@@ -259,12 +253,14 @@ def generar_con_reintento(prompt_texto, intentos=6, espera=5):
             resp = client.models.generate_content(model=MODELO_IA, contents=prompt_texto)
             return resp
         except Exception as e:
-            st.error(f"Detalle exacto del error de Google: {e}")
             str_e = str(e)
-            # Si es un error temporal (503, saturación), reintentamos si quedan intentos
+            # Si es un error temporal (503, saturación) y aún nos quedan intentos, esperamos sin mostrar error en pantalla
             if ("503" in str_e or "UNAVAILABLE" in str_e or "RESOURCE_EXHAUSTED" in str_e) and intento < intentos - 1:
                 time.sleep(espera)
                 continue
+            
+            # Si se acaban los intentos o es otro error diferente, mostramos el error definitivo
+            st.error(f"Detalle exacto del error de Google: {e}")
             return None
     return None
 def sincronizar_desde_supabase():
