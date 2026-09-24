@@ -66,8 +66,7 @@ if not api_key:
         api_key = api_key_input
 
 client = genai.Client(api_key=api_key) if api_key else None
-MODELO_IA = "gemini-2.5-flash"
-
+MODELO_IA = "gemini-3.6-flash"
 # Archivos locales de respaldo
 CSV_SIMULACROS = "historial_simulacros.csv"
 CSV_TEST_TEMAS = "historial_test_temas.csv"
