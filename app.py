@@ -22,13 +22,7 @@ st.set_page_config(
 # ==============================================================================
 # CONFIGURACIÓN DE SUPABASE Y RUTINAS POR DEFECTO
 # ==============================================================================
-RUTINAS_POR_DEFECTO = {
-    "Push (Empuje)": ["Press de banca plano con barra", "Press de banca inclinado con barra", "Press militar con barra", "Fondos en paralelas (Dips)", "Elevaciones laterales con mancuernas", "Press francés con barra Z", "Extensiones de tríceps en polea"],
-    "Pull (Tirón)": ["Dominadas pronas lastradas", "Remo con barra", "Jalón al pecho en polea", "Remo en polea baja (Tirón horizontal)", "Face pull", "Curl de bíceps con barra", "Curl con mancuernas tipo martillo"],
-    "Pierna (Tren Inferior)": ["Sentadilla trasera con barra", "Sentadilla frontal", "Prensa de piernas 45º", "Peso muerto rumano", "Zancadas con mancuernas (Lunges)", "Curl de isquios en máquina", "Elevación de talones en máquina (Gemelos)"],
-    "Upper (Tren Superior)": ["Press de banca plano con barra", "Dominadas libres", "Press militar con mancuernas", "Remo con mancuerna a una mano", "Dominadas lastradas supinas"],
-    "Lower (Fuerza / Salto / Opos)": ["Sentadilla trasera con barra", "Salto vertical con contramovimiento", "Cargadas de potencia (Power Clean)", "Prensa de piernas 45º", "Plancha abdominal isométrica"]
-}
+RUTINAS_POR_DEFECTO = {}
 
 # Lectura directa y estricta de secretos (sin respaldos falsos)
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -74,15 +68,80 @@ CSV_FALLOS_REPASO = "banco_fallos_repaso.csv"
 CSV_FLASHCARDS = "flashcards_guardadas.csv"
 
 LISTA_EJERCICIOS_HEAVY = [
+    # --- PECHO (CHEST) ---
     "Press de banca plano con barra", "Press de banca plano con mancuernas",
     "Press de banca inclinado con barra", "Press de banca inclinado con mancuernas",
-    "Dominadas pronas lastradas", "Dominadas libres", "Dominadas supinas (chin-ups)",
-    "Remo con barra", "Remo con mancuerna a una mano", "Remo en polea baja (Tirón horizontal)",
+    "Press de banca declinado con barra", "Press declinado con mancuernas",
+    "Aperturas con mancuernas (Chest Fly)", "Aperturas inclinadas con mancuernas",
+    "Cruce de poleas (Cable Crossover - polea alta)", "Cruce de poleas (polea baja / media)",
+    "Pullover con mancuerna", "Pullover en polea",
+    "Fondos en paralelas (Dips - enfoque pecho)", "Flexiones de pecho tradicionales (Push-ups)",
+    "Flexiones declinadas", "Flexiones inclinadas", "Flexiones diamantinas (tríceps/pecho)",
+
+    # --- ESPALDA (BACK) ---
+    "Dominadas pronas lastradas", "Dominadas libres (Pull-ups)", "Dominadas supinas (Chin-ups)",
+    "Dominadas neutras", "Dominadas anchas",
+    "Jalón al pecho en polea (Lat Pulldown)", "Jalón tras nuca en polea", "Jalón con agarre neutro estrecho",
+    "Remo con barra (Barbell Row)", "Remo con mancuerna a una mano (Dumbbell Row)",
+    "Remo en polea baja (Tirón horizontal / Seated Cable Row)", "Remo en máquina T (T-Bar Row)",
+    "Remo Pendlay", "Remo en puntas de barra", "Remo horizontal con pecho apoyado",
+    "Pullover en polea alta con barra recta", "Pullover en polea con cuerda",
+    "Face Pull en polea", "Encogimientos de hombros con barra (Barbell Shrugs)", "Encogimientos con mancuernas",
+
+    # --- HOMBROS (SHOULDERS) ---
     "Press militar con barra (Standing Overhead Press)", "Press militar sentado con mancuernas",
-    "Curl de bíceps con barra", "Curl con mancuernas tipo martillo",
-    "Press francés con barra Z", "Extensiones de tríceps en polea alta (Cuerda)",
-    "Sentadilla trasera con barra (Back Squat)", "Prensa de piernas 45º", "Peso muerto rumano",
-    "Plancha abdominal isométrica", "Elevación de piernas colgado en barra", "Salto vertical con contramovimiento"
+    "Press Arnold con mancuernas", "Press tras nuca con barra", "Press en máquina de hombros",
+    "Elevaciones laterales con mancuernas", "Elevaciones laterales en polea baja", "Elevaciones laterales sentadas",
+    "Elevaciones frontales con mancuernas", "Elevaciones frontales con disco o barra",
+    "Pájaros (Elevaciones posteriores con mancuernas)", "Pájaros en polea o máquina contractor invertido",
+    "Elevaciones en Y o W (mancuernas / suelo)",
+
+    # --- BÍCEPS (BICEPS) ---
+    "Curl de bíceps con barra recta", "Curl con barra Z", "Curl con mancuernas alterno de pie",
+    "Curl con mancuernas tipo martillo (Hammer Curl)", "Curl en banco Scott (Predicador con barra Z / mancuernas)",
+    "Curl en polea baja", "Curl concentrado con mancuerna", "Curl inclinado con mancuernas",
+    "Curl en polea alta (Estilo doble bíceps / Crossover)", "Curl zottman",
+
+    # --- TRÍCEPS (TRICEPS) ---
+    "Press francés con barra Z (Skull Crushers)", "Press francés con mancuernas",
+    "Extensiones de tríceps en polea alta (con cuerda)", "Extensiones de tríceps en polea alta (con barra recta / V)",
+    "Press cerrado en banca (Close-grip Bench Press)", "Patada de tríceps con mancuerna",
+    "Fondos en banco (Bench Dips)", "Extensiones cenitales con mancuerna a dos manos",
+    "Extensiones cenitales con mancuerna a una mano", "Extensiones de tríceps unilaterales en polea",
+
+    # --- PIERNAS - CUÁDRICEPS (QUADS) ---
+    "Sentadilla trasera con barra (Back Squat)", "Sentadilla frontal (Front Squat)",
+    "Sentadilla búlgara con mancuernas (Bulgarian Split Squat)", "Sentadilla Hack en máquina",
+    "Prensa de piernas 45º", "Prensa horizontal", "Extensiones de cuádriceps en máquina",
+    "Zancadas con mancuernas (Lunges)", "Zancadas en máquina / caminata", "Sentadilla Goblet con mancuerna / kettlebell",
+    "Sentadilla Sissy", "Pistol squats (Sentadillas a una pierna)",
+
+    # --- PIERNAS - ISQUIOS Y GLÚTEOS (HAMSTRINGS & GLUTES) ---
+    "Peso muerto convencional con barra", "Peso muerto rumano (Romanian Deadlift)", "Peso muerto sumo",
+    "Peso muerto con mancuernas", "Curl de isquios tumbado en máquina (Leg Curl acostado)",
+    "Curl de isquios sentado en máquina", "Curl de isquios femoral de pie",
+    "Hip thrust con barra", "Hip thrust en máquina", "Puente de glúteos en suelo",
+    "Patada de glúteo en polea baja", "Buenos días (Good Mornings con barra)", "Patada de glúteo en máquina",
+
+    # --- GEMELOS Y ANTEBRAZOS (CALVES & FOREARMS) ---
+    "Elevación de talones de pie en máquina (Gemelos de pie)", "Elevación de talones sentado en máquina",
+    "Elevación de talones en prensa 45º", "Curl de muñeca con barra (antebrazos)",
+    "Curl de muñeca inverso", "Paseo del granjero con barra o mancuernas (Farmer's Walk)",
+
+    # --- ABDOMEN Y CORE (CORE) ---
+    "Plancha abdominal isométrica", "Plancha lateral", "Abdominales crunch tradicionales en suelo",
+    "Elevación de piernas colgado en barra (Hanging Leg Raises)", "Elevación de rodillas colgado",
+    "Rueda abdominal (Ab Wheel Rollout)", "Russian twists con disco o mancuerna",
+    "Pallof press en polea", "Crunches en polea alta (Abdominales en polea de rodillas)",
+    "Elevaciones de tronco en banco romano (Hyperextensions - core/lumbares)",
+
+    # --- FUNCIONALES, POTENCIA Y OPOSICIÓN BOMBERO ---
+    "Salto vertical con contramovimiento", "Cargadas de potencia (Power Clean)",
+    "Arrancadas (Snatch)", "Clean and Jerk", "Thrusters con barra o mancuernas",
+    "Kettlebell Swing (Oscilación con pesa rusa)", "Carga de saco de arena (Sandbag Carry)",
+    "Lanzamiento de balón medicinal (Ball Slam)", "Pase del granjero (Farmer's Walk con pesados)",
+    "Subida de cuerda sin ayuda de piernas", "Simulación de Course Navette / Test de resistencia",
+    "Burpees", "Saltos al cajón (Box Jumps)"
 ]
 
 def limpiar_nombre_archivo(nombre):
@@ -162,9 +221,20 @@ def inicializar_estados():
 
     sincronizar_desde_supabase()
     
+    # 2. Cargar tus rutinas personalizadas desde la nube (sin por defecto)
     if "mis_rutinas" not in st.session_state:
-        st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
-    # ... (el resto de tus inicializaciones siguen igual)
+        if supabase:
+            try:
+                res_rutinas = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
+                if res_rutinas:
+                    st.session_state.mis_rutinas = json.loads(res_rutinas.decode("utf-8"))
+                else:
+                    st.session_state.mis_rutinas = {}
+            except Exception:
+                st.session_state.mis_rutinas = {}
+        else:
+            st.session_state.mis_rutinas = {}
+
     if "historico" not in st.session_state:
         st.session_state.historico = pd.read_csv(CSV_SIMULACROS).to_dict("records") if os.path.exists(CSV_SIMULACROS) else []
     if "historico_test_temas" not in st.session_state:
@@ -539,17 +609,15 @@ elif opcion == "🏋️‍♂️ Preparación Física":
         lista_ejercicios = st.multiselect(
             "Selecciona o añade los ejercicios que componen esta rutina (Catálogo Completo):",
             LISTA_EJERCICIOS_HEAVY,
-            default=["Press de banca plano con barra", "Dominadas pronas lastradas", "Sentadilla trasera con barra (Back Squat)"],
+            default=[],
             key="multiselect_nueva_rutina"
         )
         
         if st.button("➕ Guardar Nueva Rutina", key="btn_guardar_nueva_rutina"):
             if nombre_nueva_rutina and lista_ejercicios:
-                # 1. Actualizamos la memoria local
                 st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
                 
                 try:
-                    # 2. Preparamos y subimos a Supabase con el booleano real upsert=True
                     json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
                     supabase.storage.from_("temarios").upload(
                         path="datos/mis_rutinas.json",
@@ -557,9 +625,8 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                         file_options={"content-type": "application/json", "upsert": True}
                     )
                     st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada!")
-                    st.cache_data.clear()
+                    st.rerun()
                 except Exception as e:
-                    # Por si acaso el upload falla porque ya existe de otra forma, probamos update
                     try:
                         supabase.storage.from_("temarios").update(
                             path="datos/mis_rutinas.json",
@@ -567,7 +634,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                             file_options={"content-type": "application/json"}
                         )
                         st.success(f"¡Rutina '{nombre_nueva_rutina}' actualizada en nube!")
-                        st.cache_data.clear()
+                        st.rerun()
                     except Exception as e2:
                         st.error(f"Error al guardar: {e2}")
             else:
@@ -576,13 +643,32 @@ elif opcion == "🏋️‍♂️ Preparación Física":
         if st.session_state.mis_rutinas:
             st.markdown("---")
             st.markdown("### Tus Rutinas Actuales:")
+            
             for r_nombre, r_ejs in list(st.session_state.mis_rutinas.items()):
                 c_r1, c_r2 = st.columns([0.8, 0.2])
-                with c_r1: st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
+                with c_r1: 
+                    st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
                 with c_r2:
-                    if st.button("Borrar", key=f"del_rut_{r_nombre}"):
+                    if st.button("🗑️ Borrar", key=f"btn_del_{r_nombre}"):
                         del st.session_state.mis_rutinas[r_nombre]
-                        guardar_rutinas_nube()
+                        # Forzamos la subida a Supabase tras borrar para que se guarde el estado limpio
+                        try:
+                            json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
+                            supabase.storage.from_("temarios").upload(
+                                path="datos/mis_rutinas.json",
+                                file=json_bytes,
+                                file_options={"content-type": "application/json", "upsert": True}
+                            )
+                        except:
+                            try:
+                                supabase.storage.from_("temarios").update(
+                                    path="datos/mis_rutinas.json",
+                                    file=json_bytes,
+                                    file_options={"content-type": "application/json"}
+                                )
+                            except:
+                                pass
+                        st.success(f"Rutina '{r_nombre}' eliminada.")
                         st.rerun()
 
     with t3:
