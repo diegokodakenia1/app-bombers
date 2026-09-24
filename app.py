@@ -91,7 +91,7 @@ def limpiar_nombre_archivo(nombre):
     limpio = re.sub(r'[^a-zA-Z0-9_\.-]', '_', solo_ascii)
     return limpio
 
-def generar_con_reintento(prompt_texto, intentos=4, espera=3):
+def generar_con_reintento(prompt_texto, intentos=6, espera=5):
     if client is None:
         return None
     global MODELO_IA
