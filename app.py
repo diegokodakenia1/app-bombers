@@ -597,8 +597,8 @@ elif opcion == "📝 Simulacro de Examen":
 # ------------------------------------------------------------------------------
 # 3. TEST POR TEMAS
 # ------------------------------------------------------------------------------
-elif opcion == "📚 Test por Temas":
-    st.header("📚 Test por Temas")
+elif opcion == "🎯 Test por Temas":
+    st.header("🎯 Test por Temas")
     
     if "textos_pdfs_temario" not in st.session_state:
         st.session_state.textos_pdfs_temario = {}
