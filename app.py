@@ -607,7 +607,8 @@ docs = list(st.session_state.textos_pdfs_temario.keys())
 
 if not docs:
     st.warning("Sube PDFs en la Biblioteca.")
-    else:
+else:
+    # (Aquí sigue el resto del código que ya tenías para seleccionar los temas y hacer los tests)
         ts = st.selectbox("Tema:", docs)
         cant = st.slider("Preguntas:", 5, 40, 15, 5)
         if st.button("🚀 Generar Test de Tema"):
