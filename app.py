@@ -601,11 +601,11 @@ elif opcion == "🎯 Test por Temas":
     st.header("🎯 Test Específico por Temas")
    # Asegurar que la clave existe antes de usarla
 if "textos_pdfs_temario" not in st.session_state:
-    st.session_state.textos_pdfs_temario = {}
+        st.session_state.textos_pdfs_temario = {}
 
-docs = list(st.session_state.textos_pdfs_temario.keys())
+    docs = list(st.session_state.textos_pdfs_temario.keys())
 
-if not docs:
+    if not docs:
         st.warning("Sube PDFs en la Biblioteca.")
     else:
         # Seleccionar tema para el test
@@ -650,7 +650,6 @@ elif opcion == "💡 Preguntas de Repaso":
                 st.session_state.repaso_aleatorio = resp.text
         if "repaso_aleatorio" in st.session_state:
             renderizar_test_interactivo(st.session_state.repaso_aleatorio, "repaso_rand", nombre_tema="Repaso Aleatorio")
-
 # ------------------------------------------------------------------------------
 # 5. PREPARACIÓN FÍSICA
 # ------------------------------------------------------------------------------
