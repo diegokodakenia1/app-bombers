@@ -600,81 +600,74 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 st.success("🎉 ¡Entrenamiento guardado con éxito en la nube!")
 
     with t2:
-        st.subheader("Crea tus propias rutinas de entrenamiento")
-        
-        nombre_nueva_rutina = st.text_input(
-            "Nombre de la rutina (ej: Torso - Fuerza, Pierna Bombero):", 
-            key="input_nombre_nueva_rutina"
-        )
-        lista_ejercicios = st.multiselect(
-            "Selecciona o añade los ejercicios que componen esta rutina (Catálogo Completo):",
-            LISTA_EJERCICIOS_HEAVY,
-            default=[],
-            key="multiselect_nueva_rutina"
-        )
-        
-        if st.button("➕ Guardar Nueva Rutina", key="btn_guardar_nueva_rutina"):
-            if nombre_nueva_rutina and lista_ejercicios:
-                st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
-                
-                try:
-                    json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
-                    supabase.storage.from_("temarios").upload(
-                        path="datos/mis_rutinas.json",
-                        file=json_bytes,
-                        file_options={"content-type": "application/json", "upsert": True}
-                    )
-                    st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada!")
-                    st.rerun()
-                except Exception as e:
+            st.subheader("Crea tus propias rutinas de entrenamiento")
+            
+            nombre_nueva_rutina = st.text_input(
+                "Nombre de la rutina (ej: Torso - Fuerza, Pierna Bombero):", 
+                key="input_nombre_nueva_rutina"
+            )
+            lista_ejercicios = st.multiselect(
+                "Selecciona o añade los ejercicios que componen esta rutina (Catálogo Completo):",
+                LISTA_EJERCICIOS_HEAVY,
+                default=[],
+                key="multiselect_nueva_rutina"
+            )
+            
+            if st.button("➕ Guardar Nueva Rutina", key="btn_guardar_nueva_rutina"):
+                if nombre_nueva_rutina and lista_ejercicios:
+                    st.session_state.mis_rutinas[nombre_nueva_rutina] = lista_ejercicios
+                    
                     try:
-                        supabase.storage.from_("temarios").update(
+                        json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
+                        # Forzamos borrado previo para evitar conflictos de caché en el Storage
+                        try:
+                            supabase.storage.from_("temarios").remove(["datos/mis_rutinas.json"])
+                        except:
+                            pass
+                        
+                        supabase.storage.from_("temarios").upload(
                             path="datos/mis_rutinas.json",
                             file=json_bytes,
                             file_options={"content-type": "application/json"}
                         )
-                        st.success(f"¡Rutina '{nombre_nueva_rutina}' actualizada en nube!")
+                        st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada!")
                         st.rerun()
                     except Exception as e2:
-                        st.error(f"Error al guardar: {e2}")
-            else:
-                st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
+                        st.error(f"Error al guardar en la nube: {e2}")
+                else:
+                    st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
 
-        if st.session_state.mis_rutinas:
-            st.markdown("---")
-            st.markdown("### Tus Rutinas Actuales:")
-            
-            # Usamos enumerate para tener un índice único 'i' y evitar conflictos en las keys
-            for i, (r_nombre, r_ejs) in enumerate(list(st.session_state.mis_rutinas.items())):
-                c_r1, c_r2 = st.columns([0.8, 0.2])
-                with c_r1: 
-                    st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
-                with c_r2:
-                    # Key única basada en el índice 'i'
-                    if st.button("🗑️ Borrar", key=f"btn_del_idx_{i}"):
-                        # 1. Borramos del diccionario en local
-                        del st.session_state.mis_rutinas[r_nombre]
-                        
-                        # 2. Guardamos el estado actualizado inmediatamente en Supabase
-                        try:
-                            json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
-                            supabase.storage.from_("temarios").upload(
-                                path="datos/mis_rutinas.json",
-                                file=json_bytes,
-                                file_options={"content-type": "application/json", "upsert": True}
-                            )
-                        except Exception:
+            if st.session_state.mis_rutinas:
+                st.markdown("---")
+                st.markdown("### Tus Rutinas Actuales:")
+                
+                for i, (r_nombre, r_ejs) in enumerate(list(st.session_state.mis_rutinas.items())):
+                    c_r1, c_r2 = st.columns([0.8, 0.2])
+                    with c_r1: 
+                        st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
+                    with c_r2:
+                        if st.button("🗑️ Borrar", key=f"btn_del_idx_{i}"):
+                            # 1. Borramos del diccionario en local
+                            del st.session_state.mis_rutinas[r_nombre]
+                            
+                            # 2. Actualizamos la nube borrando y subiendo el JSON limpio
                             try:
-                                supabase.storage.from_("temarios").update(
+                                json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
+                                try:
+                                    supabase.storage.from_("temarios").remove(["datos/mis_rutinas.json"])
+                                except:
+                                    pass
+                                
+                                supabase.storage.from_("temarios").upload(
                                     path="datos/mis_rutinas.json",
                                     file=json_bytes,
                                     file_options={"content-type": "application/json"}
                                 )
-                            except Exception:
-                                pass
+                            except Exception as e_del:
+                                st.error(f"Error al actualizar la nube: {e_del}")
                                 
-                        st.success(f"Rutina '{r_nombre}' eliminada.")
-                        st.rerun()
+                            st.success(f"Rutina '{r_nombre}' eliminada.")
+                            st.rerun()
 
     with t3:
         if st.session_state.get("historial_marcas"):
