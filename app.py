@@ -664,7 +664,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             with col_b1:
                 btn_texto = "💾 Guardar Cambios de la Rutina" if rutina_en_edicion else "➕ Guardar Nueva Rutina"
 
-                if st.button(btn_texto, key="btn_guardar_nueva_rutina"):
+                if st.button(btn_texto, key="btn_guardar_nueva_rutina_fixed"):
                     if nombre_nueva_rutina and lista_ejercicios:
                         if rutina_en_edicion and rutina_en_edicion != nombre_nueva_rutina:
                             if rutina_en_edicion in st.session_state.mis_rutinas:
@@ -694,7 +694,7 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             
             with col_b2:
                 if rutina_en_edicion:
-                    if st.button("❌ Cancelar", key="cancelar_edicion"):
+                    if st.button("❌ Cancelar", key="cancelar_edicion_rutina"):
                         st.session_state.editando_rutina = None
                         st.rerun()
 
@@ -704,7 +704,6 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                 
                 rutinas_keys = list(st.session_state.mis_rutinas.keys())
                 
-                # Usamos enumerate para añadir el índice 'i' y evitar cualquier duplicidad de keys
                 for i, r_nombre in enumerate(rutinas_keys):
                     r_ejs = st.session_state.mis_rutinas[r_nombre]
                     c_r1, c_r2, c_r3 = st.columns([0.65, 0.17, 0.18])
@@ -713,19 +712,22 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                         st.write(f"• **{r_nombre}**: {', '.join(r_ejs)}")
                     
                     with c_r2:
-                        btn_edit_key = f"btn_edit_{i}_{r_nombre.strip().replace(' ', '_')}"
-                        if st.button("✏️ Editar", key=btn_edit_key):
+                        # Clave única garantizada con prefijo numérico estricto
+                        if st.button("✏️ Editar", key=f"edit_rutina_idx_{i}"):
                             st.session_state.editando_rutina = r_nombre
                             st.rerun()
 
                     with c_r3:
-                        btn_del_key = f"btn_del_name_{i}_{r_nombre.strip().replace(' ', '_')}"
-                        if st.button("🗑️ Borrar", key=btn_del_key):
+                        if st.button("🗑️ Borrar", key=f"del_rutina_idx_{i}"):
+                            # Si estábamos editando justo esta rutina, cancelamos el modo edición
                             if st.session_state.editando_rutina == r_nombre:
                                 st.session_state.editando_rutina = None
                                 
-                            del st.session_state.mis_rutinas[r_nombre]
+                            # Eliminamos del diccionario local
+                            if r_nombre in st.session_state.mis_rutinas:
+                                del st.session_state.mis_rutinas[r_nombre]
                             
+                            # Actualizamos Supabase inmediatamente
                             try:
                                 json_bytes = json.dumps(st.session_state.mis_rutinas, ensure_ascii=False).encode("utf-8")
                                 try:
@@ -738,12 +740,10 @@ elif opcion == "🏋️‍♂️ Preparación Física":
                                     file=json_bytes,
                                     file_options={"content-type": "application/json"}
                                 )
+                                st.success(f"Rutina '{r_nombre}' eliminada correctamente.")
+                                st.rerun()
                             except Exception as e_del:
                                 st.error(f"Error al actualizar la nube: {e_del}")
-                                
-                            st.success(f"Rutina '{r_nombre}' eliminada.")
-                            st.rerun()
-
     with t3:
         if st.session_state.get("historial_marcas"):
             df_marcas = pd.DataFrame(st.session_state.historial_marcas)
