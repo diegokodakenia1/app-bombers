@@ -254,19 +254,17 @@ def generar_con_reintento(prompt_texto, intentos=6, espera=5):
             return resp
         except Exception as e:
             str_e = str(e)
-            # Si es un error temporal (503, saturación) y aún nos quedan intentos, esperamos sin mostrar error en pantalla
             if ("503" in str_e or "UNAVAILABLE" in str_e or "RESOURCE_EXHAUSTED" in str_e) and intento < intentos - 1:
                 time.sleep(espera)
                 continue
             
-            # Si se acaban los intentos o es otro error diferente, mostramos el error definitivo
             st.error(f"Detalle exacto del error de Google: {e}")
             return None
     return None
+
 def sincronizar_desde_supabase():
     if not supabase:
         return
-    # Intentar descargar rutinas de la nube si existen
     try:
         res_bytes = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
         if res_bytes:
@@ -287,7 +285,6 @@ def guardar_rutinas_nube():
             )
         except Exception:
             try:
-                # Si falla porque el archivo ya existe, usamos update
                 json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
                 supabase.storage.from_("temarios").update(
                     path="datos/mis_rutinas.json",
@@ -298,7 +295,6 @@ def guardar_rutinas_nube():
                 pass
 
 def inicializar_estados():
-    # 1. Descargar el plan de estudio y el progreso de la nube lo primero de todo
     if supabase:
         try:
             res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
@@ -309,7 +305,6 @@ def inicializar_estados():
                 if "progreso_estudio" not in st.session_state:
                     st.session_state.progreso_estudio = datos_nube.get("progreso", {})
                     
-                # Inyectar inmediatamente en la sesión de Streamlit
                 for k, v in st.session_state.progreso_estudio.items():
                     st.session_state[k] = v
         except Exception:
@@ -317,7 +312,6 @@ def inicializar_estados():
 
     sincronizar_desde_supabase()
     
-    # 2. Cargar tus rutinas personalizadas desde la nube (sin por defecto)
     if "mis_rutinas" not in st.session_state:
         if supabase:
             try:
@@ -344,7 +338,6 @@ def inicializar_estados():
 
 inicializar_estados()
 
-# Botón de emergencia para forzar la sincronización en la barra lateral
 if st.sidebar.button("🔄 Sincronizar con Nube"):
     if "mis_rutinas" in st.session_state:
         del st.session_state.mis_rutinas
@@ -355,7 +348,6 @@ def guardar_simulacros_disco():
     if st.session_state.historico:
         df = pd.DataFrame(st.session_state.historico)
         df.to_csv(CSV_SIMULACROS, index=False)
-        # Sincronizar con Supabase
         if supabase:
             try:
                 json_bytes = df.to_json(orient="records").encode("utf-8")
@@ -393,6 +385,7 @@ def guardar_banco_fallos_disco():
                 )
             except Exception:
                 pass
+
 def guardar_plan_nube():
     if supabase:
         try:
@@ -529,6 +522,18 @@ opcion = st.sidebar.radio(
         "💬 Tutor IA 24/7"
     ]
 )
+
+# ------------------------------------------------------------------------------
+# FUNCIÓN AUXILIAR PARA LIMPIAR NOMBRES DE ARCHIVOS
+# ------------------------------------------------------------------------------
+def limpiar_nombre_archivo(nombre):
+    # Elimina tildes y caracteres especiales
+    nfkd_form = unicodedata.normalize('NFKD', nombre)
+    solo_ascii = nfkd_form.encode('ASCII', 'ignore').decode('ASCII')
+    # Reemplaza espacios y caracteres no deseados por guiones bajos
+    nombre_limpio = re.sub(r'[^\w\s.-]', '', solo_ascii)
+    nombre_limpio = nombre_limpio.replace(' ', '_')
+    return nombre_limpio
 
 # ------------------------------------------------------------------------------
 # 1. BIBLIOTECA DEL TEMARIO (SINCRONIZADA CON SUPABASE)
