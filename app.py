@@ -233,7 +233,385 @@ LISTA_EJERCICIOS_HEAVY = [
     "Crunches en polea alta (Abdominales en polea de rodillas con cuerda)",
     "Elevaciones de tronco en banco romano / Hiperextensiones (Back Extensions)", "Giros rusos o twists en polea baja",
 
+    # --- FUNCIONALES, POTENCIA Y OPOSICIÓN BOMBERO ---
+    "Salto vertical con contramovimiento", "Cargadas de potencia (Power Clean)",
+    "Arrancadas (Snatch)", "Clean and Jerk", "Thrusters con barra o mancuernas",
+    "Kettlebell Swing (Oscilación con pesa rusa)", "Carga y transporte de saco de arena (Sandbag Carry)",
+    "Lanzamiento de balón medicinal (Ball Slam)", "Subida de cuerda sin ayuda de piernas (Oposiciones Bombero)",
+    "Simulación de Course Navette / Test de resistencia", "Burpees", "Saltos al cajón (Box Jumps)",
+    "Battle Ropes (Cuerdas de batalla)", "Sled Push / Sled Pull (Arrastre y empuje de trineo de fuerza)"
+]
 
+def generar_con_reintento(prompt_texto, intentos=6, espera=5):
+    if client is None:
+        return None
+    global MODELO_IA
+    for intento in range(intentos):
+        try:
+            resp = client.models.generate_content(model=MODELO_IA, contents=prompt_texto)
+            return resp
+        except Exception as e:
+            str_e = str(e)
+            if ("503" in str_e or "UNAVAILABLE" in str_e or "RESOURCE_EXHAUSTED" in str_e) and intento < intentos - 1:
+                time.sleep(espera)
+                continue
+            
+            st.error(f"Detall exacte de l'error de Google: {e}")
+            return None
+    return None
+
+def sincronizar_desde_supabase():
+    if not supabase:
+        return
+    try:
+        res_bytes = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
+        if res_bytes:
+            rutinas_nube = json.loads(res_bytes.decode("utf-8"))
+            if isinstance(rutinas_nube, dict) and rutinas_nube:
+                st.session_state.mis_rutinas.update(rutinas_nube)
+    except Exception:
+        pass
+
+def guardar_rutinas_nube():
+    if supabase and "mis_rutinas" in st.session_state:
+        try:
+            json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
+            supabase.storage.from_("temarios").upload(
+                path="datos/mis_rutinas.json",
+                file=json_bytes,
+                file_options={"content-type": "application/json", "upsert": "true"}
+            )
+        except Exception:
+            try:
+                json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
+                supabase.storage.from_("temarios").update(
+                    path="datos/mis_rutinas.json",
+                    file=json_bytes,
+                    file_options={"content-type": "application/json"}
+                )
+            except Exception as e:
+                pass
+
+def inicializar_estados():
+    if supabase:
+        try:
+            res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
+            if res_bytes:
+                datos_nube = json.loads(res_bytes.decode("utf-8"))
+                if "plan_estudio_json" not in st.session_state:
+                    st.session_state.plan_estudio_json = datos_nube.get("plan_json", [])
+                if "progreso_estudio" not in st.session_state:
+                    st.session_state.progreso_estudio = datos_nube.get("progreso", {})
+                    
+                for k, v in st.session_state.progreso_estudio.items():
+                    st.session_state[k] = v
+        except Exception:
+            pass
+
+    sincronizar_desde_supabase()
+    
+    if "mis_rutinas" not in st.session_state:
+        if supabase:
+            try:
+                res_rutinas = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
+                if res_rutinas:
+                    st.session_state.mis_rutinas = json.loads(res_rutinas.decode("utf-8"))
+                else:
+                    st.session_state.mis_rutinas = {}
+            except Exception:
+                st.session_state.mis_rutinas = {}
+        else:
+            st.session_state.mis_rutinas = {}
+
+    if "historico" not in st.session_state:
+        st.session_state.historico = pd.read_csv(CSV_SIMULACROS).to_dict("records") if os.path.exists(CSV_SIMULACROS) else []
+    if "historico_test_temas" not in st.session_state:
+        st.session_state.historico_test_temas = pd.read_csv(CSV_TEST_TEMAS).to_dict("records") if os.path.exists(CSV_TEST_TEMAS) else []
+    if "banco_fallos" not in st.session_state:
+        st.session_state.banco_fallos = pd.read_csv(CSV_FALLOS_REPASO).to_dict("records") if os.path.exists(CSV_FALLOS_REPASO) else []
+    if "flashcards" not in st.session_state:
+        st.session_state.flashcards = pd.read_csv(CSV_FLASHCARDS).to_dict("records") if os.path.exists(CSV_FLASHCARDS) else []
+    if "historial_marcas" not in st.session_state:
+        st.session_state.historial_marcas = []
+
+inicializar_estados()
+
+if st.sidebar.button("🔄 Sincronitzar amb el Núvol"):
+    if "mis_rutinas" in st.session_state:
+        del st.session_state.mis_rutinas
+    sincronizar_desde_supabase()
+    st.rerun()
+
+def guardar_simulacros_disco():
+    if st.session_state.historico:
+        df = pd.DataFrame(st.session_state.historico)
+        df.to_csv(CSV_SIMULACROS, index=False)
+        if supabase:
+            try:
+                json_bytes = df.to_json(orient="records").encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/historico_simulacros.json", file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
+
+def guardar_test_temas_disco():
+    if st.session_state.historico_test_temas:
+        df = pd.DataFrame(st.session_state.historico_test_temas)
+        df.to_csv(CSV_TEST_TEMAS, index=False)
+        if supabase:
+            try:
+                json_bytes = df.to_json(orient="records").encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/historico_test_temas.json", file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
+
+def guardar_banco_fallos_disco():
+    if st.session_state.banco_fallos:
+        df = pd.DataFrame(st.session_state.banco_fallos)
+        df.to_csv(CSV_FALLOS_REPASO, index=False)
+        if supabase:
+            try:
+                json_bytes = df.to_json(orient="records").encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/banco_fallos.json", file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
+
+def guardar_plan_nube():
+    if supabase:
+        try:
+            datos_plan = {
+                "plan_json": st.session_state.get("plan_estudio_json", []),
+                "progreso": st.session_state.get("progreso_estudio", {})
+            }
+            json_bytes = json.dumps(datos_plan).encode("utf-8")
+            supabase.storage.from_("temarios").upload(
+                path="datos/plan_estudio.json", 
+                file=json_bytes,
+                file_options={"content-type": "application/json", "upsert": "true"}
+            )
+        except Exception:
+            try:
+                json_bytes = json.dumps(datos_plan).encode("utf-8")
+                supabase.storage.from_("temarios").update(
+                    path="datos/plan_estudio.json", 
+                    file=json_bytes,
+                    file_options={"content-type": "application/json"}
+                )
+            except Exception as e:
+                st.error(f"Error en desar al núvol: {e}")
+
+def guardar_flashcards_disco():
+    if st.session_state.flashcards:
+        df = pd.DataFrame(st.session_state.flashcards)
+        df.to_csv(CSV_FLASHCARDS, index=False)
+        if supabase:
+            try:
+                json_bytes = df.to_json(orient="records").encode("utf-8")
+                supabase.storage.from_("temarios").upload(
+                    path="datos/flashcards.json", file=json_bytes,
+                    file_options={"content-type": "application/json", "upsert": "true"}
+                )
+            except Exception:
+                pass
+
+# ------------------------------------------------------------------------------
+# PARSER Y RENDERIZADOR DE TEST INTERACTIVO
+# ------------------------------------------------------------------------------
+def parsear_test_a_objetos(texto_ia):
+    preguntas_limpias = []
+    bloques = re.split(r'\n\s*(?=Pregunta\s*\d+|\d+[\.\-\)]\s)', texto_ia, flags=re.IGNORECASE)
+    for bloque in bloques:
+        if not bloque.strip(): continue
+        lineas = [l.strip() for l in bloque.split('\n') if l.strip()]
+        if not lineas: continue
+        enunciado = lineas[0]
+        opciones, correcta_idx, explicacion = [], 0, ""
+        for linea in lineas[1:]:
+            match_op = re.match(r'^([A-D])[\.\-\)]\s*(.*)', linea, re.IGNORECASE)
+            if match_op: opciones.append((match_op.group(1).upper(), match_op.group(2)))
+            if re.search(r'correcta\s*[:\-]?\s*([A-D])', linea, re.IGNORECASE):
+                m_corr = re.search(r'correcta\s*[:\-]?\s*([A-D])', linea, re.IGNORECASE)
+                letra_corr = m_corr.group(1).upper()
+                for i, (l_op, _) in enumerate(opciones):
+                    if l_op == letra_corr: correcta_idx = i
+            if "explicación" in linea.lower() or "justificación" in linea.lower():
+                explicacion = linea
+        if len(opciones) >= 2:
+            preguntas_limpias.append({
+                "enunciado": enunciado,
+                "opciones": [op[1] for op in opciones],
+                "letras": [op[0] for op in opciones],
+                "correcta": correcta_idx,
+                "explicacion": explicacion if explicacion else "Resposta oficial validada."
+            })
+    return preguntas_limpias
+
+def renderizar_test_interactivo(texto_ia, clave_sesion, nombre_tema="General"):
+    if f"parsed_{clave_sesion}" not in st.session_state:
+        st.session_state[f"parsed_{clave_sesion}"] = parsear_test_a_objetos(texto_ia)
+    
+    preguntas = st.session_state[f"parsed_{clave_sesion}"]
+    if not preguntas:
+        st.markdown(texto_ia)
+        return
+
+    st.info("💡 **Mode Interactiu:** Selecciona una opció a cada pregunta.")
+    respuestas_usuario = {}
+    total_preguntas = len(preguntas)
+    
+    for idx, p in enumerate(preguntas):
+        st.markdown(f"**Pregunta {idx + 1}:** {p['enunciado']}")
+        opciones_texto = [f"{p['letras'][i]}) {op}" for i, op in enumerate(p['opciones'])]
+        seleccion = st.radio(f"Tria opció (P{idx+1}):", options=opciones_texto, key=f"test_q_{clave_sesion}_{idx}", index=None)
+        if seleccion:
+            letra_elegida = seleccion[0]
+            idx_elegido = p['letras'].index(letra_elegida) if letra_elegida in p['letras'] else -1
+            respuestas_usuario[idx] = idx_elegido
+            if idx_elegido == p['correcta']: st.success("✅ ¡Correcte!")
+            else: st.error(f"❌ Incorrecte. La bona era la **{p['letras'][p['correcta']]}) {p['opciones'][p['correcta']]}**")
+            if p['explicacion']: st.markdown(f"> 📖 *{p['explicacion']}*")
+        st.markdown("---")
+
+    if st.button("💾 Finalitzar i Desar Resultats", key=f"btn_guardar_{clave_sesion}"):
+        aciertos, fallos, nuevos_fallos = 0, 0, []
+        for idx, p in enumerate(preguntas):
+            if idx in respuestas_usuario and respuestas_usuario[idx] == p['correcta']: aciertos += 1
+            else:
+                fallos += 1
+                nuevos_fallos.append({
+                    "tema": nombre_tema, "enunciado": p['enunciado'],
+                    "correcta": f"{p['letras'][p['correcta']]}) {p['opciones'][p['correcta']]}",
+                    "explicacion": p['explicacion'], "fecha": str(datetime.date.today())
+                })
+        nota_calc = round((aciertos / total_preguntas) * 10, 2) if total_preguntas > 0 else 0.0
+        st.session_state.historico_test_temas.append({"fecha": datetime.date.today(), "tema": nombre_tema, "nota": nota_calc, "aciertos": aciertos, "fallos": fallos, "total": total_preguntas})
+        guardar_test_temas_disco()
+        for nf in nuevos_fallos:
+            if not any(f["enunciado"] == nf["enunciado"] for f in st.session_state.banco_fallos):
+                st.session_state.banco_fallos.append(nf)
+        guardar_banco_fallos_disco()
+        st.success(f"🎉 Desat! Nota: {nota_calc}/10")
+
+# ------------------------------------------------------------------------------
+# PANEL DE NAVEGACIÓN LATERAL
+# ------------------------------------------------------------------------------
+st.sidebar.title("🚒 Panell de Navegació")
+opcion = st.sidebar.radio(
+    "Selecciona un mòdul:",
+    [
+        "📚 Biblioteca del Temari",
+        "📝 Simulacre d'Examen",
+        "🎯 Test per Temes",
+        "💡 Preguntes de Repàs",
+        "🏋️‍♂️ Preparació Física",
+        "📅 Pla d'Estudi Personalitzat",
+        "🎴 Flashcards de Memorització",
+        "📄 Esquemes i Taules Tècniques",
+        "🏛️ Preguntes Exàmens Oficials",
+        "📊 Estadístiques i Progressos",
+        "💬 Tutor IA 24/7"
+    ]
+)
+
+# ------------------------------------------------------------------------------
+# FUNCIÓN AUXILIAR PARA LIMPIAR NOMBRES DE ARCHIVOS
+# ------------------------------------------------------------------------------
+def limpiar_nombre_archivo(nombre):
+    nfkd_form = unicodedata.normalize('NFKD', nombre)
+    solo_ascii = nfkd_form.encode('ASCII', 'ignore').decode('ASCII')
+    nombre_limpio = re.sub(r'[^\w\s.-]', '', solo_ascii)
+    nombre_limpio = nombre_limpio.replace(' ', '_')
+    return nombre_limpio
+
+# ------------------------------------------------------------------------------
+# 1. BIBLIOTECA DEL TEMARIO (SINCRONIZADA CON SUPABASE)
+# ------------------------------------------------------------------------------
+if opcion == "📚 Biblioteca del Temari":
+    st.header("📚 Biblioteca del Temari Oficial (Núvol)")
+    st.write("Puja els teus PDF. Els noms s'adaptaran automàticament per desar-se sense errors a Supabase.")
+
+    archivos_subidos = st.file_uploader("Puja fitxers PDF:", type=["pdf"], accept_multiple_files=True, key="up_temario")
+
+    if archivos_subidos and supabase:
+        for archivo in archivos_subidos:
+            nombre_limpio = limpiar_nombre_archivo(archivo.name)
+            try:
+                supabase.storage.from_("temarios").upload(
+                    path=f"temarios/{nombre_limpio}",
+                    file=archivo.getvalue(),
+                    file_options={"content-type": "application/pdf", "upsert": "true"}
+                )
+                
+                archivo.seek(0)
+                texto = "".join([p.extract_text() + "\n" for p in pypdf.PdfReader(archivo).pages if p.extract_text()])
+                if texto.strip():
+                    st.session_state.textos_pdfs_temario[nombre_limpio] = texto
+                    st.success(f"📄 '{nombre_limpio}' pujat i desat al núvol amb èxit.")
+            except Exception as e:
+                st.error(f"Error en pujar {archivo.name}: {e}")
+
+    if supabase:
+        try:
+            archivos_nube = supabase.storage.from_("temarios").list("temarios")
+            nombres_nube = [f['name'] for f in archivos_nube if f['name'] != '']
+        except Exception:
+            nombres_nube = []
+    else:
+        nombres_nube = list(st.session_state.textos_pdfs_temario.keys())
+
+    if nombres_nube:
+        st.subheader("📁 Documents al Núvol")
+        for doc in nombres_nube:
+            c1, c2 = st.columns([0.8, 0.2])
+            with c1: st.write(f"• **{doc}**")
+            with c2:
+                if st.button("Eliminar", key=f"del_doc_{doc}"):
+                    if doc in st.session_state.textos_pdfs_temario:
+                        del st.session_state.textos_pdfs_temario[doc]
+                    try: 
+                        supabase.storage.from_("temarios").remove([f"temarios/{doc}"])
+                    except Exception: 
+                        pass
+                    st.rerun()
+
+        st.markdown("---")
+        st.subheader("👀 Visor de Documents")
+        
+        pdf_seleccionado = st.selectbox("Selecciona el temari que vols visualizar:", nombres_nube, key="visor_temario_select")
+        
+        if pdf_seleccionado:
+            if st.button("📖 Carregar i Veure Document", key="btn_cargar_visor"):
+                with st.spinner("Descarregant document des del núvol..."):
+                    try:
+                        ruta_archivo = f"temarios/{pdf_seleccionado}" if not pdf_seleccionado.startswith("temarios/") else pdf_seleccionado
+                        response_bytes = supabase.storage.from_("temarios").download(ruta_archivo)
+                        
+                        if response_bytes:
+                            import base64
+                            base64_pdf = base64.b64encode(response_bytes).decode('utf-8')
+                            altura_visor = st.slider("Ajustar alçada del visor (px):", 400, 1000, 700, 50, key="slider_altura_visor")
+                            
+                            pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="{altura_visor}px" type="application/pdf"></iframe>'
+                            st.markdown(pdf_display, unsafe_allow_html=True)
+                            
+                            st.markdown("---")
+                            st.download_button(
+                                label=f"📥 Descarregar {pdf_seleccionado}",
+                                data=response_bytes,
+                                file_name=pdf_seleccionado,
+                                mime="application/pdf",
+                                key="btn_descarga_visor"
+                            )
+                    except Exception as e:
+                        st.error(f"Error en descarregar el PDF per a la visualització: {e}")
 # ------------------------------------------------------------------------------
 # 2. SIMULACRO DE EXAMEN
 # ------------------------------------------------------------------------------
