@@ -613,47 +613,46 @@ if opcion == "📚 Biblioteca del Temari":
                     except Exception as e:
                         st.error(f"Error en descarregar el PDF per a la visualització: {e}")
 # ------------------------------------------------------------------------------
-# 2. SIMULACRO DE EXAMEN
+# 2. SIMULACRE D'EXAMEN
 # ------------------------------------------------------------------------------
-elif opcion == "📝 Simulacro de Examen":
-    st.header("📝 Simulacro de Examen Oficial")
+elif opcion == "📝 Simulacre d'Examen":
+    st.header("📝 Simulacre d'Examen Oficial")
     c1, c2 = st.columns(2)
     with c1: 
-        num_preguntas = st.slider("Número de preguntas:", 10, 120, 50, 10)
+        num_preguntas = st.slider("Nombre de preguntes:", 10, 120, 50, 10)
     with c2: 
-        tiempo_limite = st.slider("Tiempo límite (minutos):", 15, 180, 90, 15)
+        tiempo_limite = st.slider("Temps límit (minuts):", 15, 180, 90, 15)
 
-    if st.button("🚀 Generar Simulacro"):
+    if st.button("🚀 Generar Simulacre"):
         if verificar_cliente():
             txt_ref = obtener_texto_acumulado()
             prompt = (
-                f"Genera un examen tipo test oficial de {num_preguntas} preguntas con 4 opciones (A, B, C, D), "
-                f"respuesta correcta y explicación. "
-                f"Las preguntas deben estar generadas estrictamente sobre el temario de los PDF subidos a la biblioteca del temario:\n\n"
+                f"Genera un examen tipus test oficial de {num_preguntas} preguntes amb 4 opcions (A, B, C, D), "
+                f"resposta correcta i explicació. "
+                f"Les preguntes s'han de generar estrictament sobre el temari dels PDF pujats a la biblioteca del temari:\n\n"
                 f"{txt_ref[:15000]}"
             )
-            with st.spinner("Generando simulacro con el temario de la biblioteca..."):
+            with st.spinner("Generant simulacre amb el temari de la biblioteca..."):
                 resp = generar_con_reintento(prompt)
                 if resp: 
                     st.session_state.simulacro_activo = resp.text
 
     if "simulacro_activo" in st.session_state:
         st.markdown("---")
-        renderizar_test_interactivo(st.session_state.simulacro_activo, "simulacro_gen", nombre_tema="Simulacro Oficial")
+        renderizar_test_interactivo(st.session_state.simulacro_activo, "simulacre_gen", nombre_tema="Simulacre Oficial")
 
 # ------------------------------------------------------------------------------
-# 3. TEST POR TEMAS
+# 3. TEST PER TEMES
 # ------------------------------------------------------------------------------
-elif opcion == "🎯 Test por Temas":
-    st.header("🎯 Test por Temas")
+elif opcion == "🎯 Test per Temes":
+    st.header("🎯 Test per Temes")
     
     if "textos_pdfs_temario" not in st.session_state:
         st.session_state.textos_pdfs_temario = {}
 
-    # Botón de sincronización manual para la carpeta 'temarios'
-    if st.button("🔄 Sincronizar PDFs desde Supabase"):
+    # Botó de sincronització manual per a la carpeta 'temarios'
+    if st.button("🔄 Sincronitzar PDFs des de Supabase"):
         try:
-            # Listar los archivos dentro de la carpeta 'temarios' del bucket
             archivos_nube = supabase.storage.from_("temarios").list("temarios")
             
             contador = 0
@@ -661,7 +660,6 @@ elif opcion == "🎯 Test por Temas":
                 nombre_archivo = archivo.get("name") if isinstance(archivo, dict) else getattr(archivo, "name", None)
                 
                 if nombre_archivo and nombre_archivo.endswith(".pdf"):
-                    # Descargar indicando la ruta completa dentro del bucket
                     ruta_archivo = f"temarios/{nombre_archivo}"
                     pdf_bytes = supabase.storage.from_("temarios").download(ruta_archivo)
                     lector = pypdf.PdfReader(io.BytesIO(pdf_bytes))
@@ -674,27 +672,26 @@ elif opcion == "🎯 Test por Temas":
                     contador += 1
             
             if contador > 0:
-                st.success(f"¡Se han cargado {contador} PDFs correctamente desde la carpeta 'temarios'!")
+                st.success(f"¡S'han carregat {contador} PDFs correctament des de la carpeta 'temarios'!")
                 st.rerun()
             else:
-                st.warning("No se encontraron archivos PDF dentro de la carpeta 'temarios'.")
+                st.warning("No s'han trobat arxius PDF dins de la carpeta 'temarios'.")
         except Exception as e:
-            st.error(f"Error al sincronizar con Supabase: {e}")
+            st.error(f"Error en sincronitzar amb Supabase: {e}")
 
     docs = list(st.session_state.textos_pdfs_temario.keys())
 
     if not docs:
-        st.warning("Sube PDFs en la Biblioteca o pulsa el botón de arriba para sincronizar con la nube.")
+        st.warning("Puja PDFs a la Biblioteca o prem el botó de dalt per sincronitzar amb el núvol.")
     else:
-        # Seleccionar tema para el test
-        tema_sel = st.selectbox("Selecciona un documento/tema:", docs)
-        num_preguntas = st.slider("Número de preguntas:", 5, 20, 10)
+        tema_sel = st.selectbox("Selecciona un document/tema:", docs)
+        num_preguntas = st.slider("Nombre de preguntes:", 5, 20, 10)
         
         if st.button("🚀 Generar Test del Tema"):
             texto_base = st.session_state.textos_pdfs_temario[tema_sel]
             prompt = (
-                f"A partir del siguiente texto, genera un test tipo test de {num_preguntas} preguntas "
-                f"con 4 opciones (A, B, C, D) y marca la respuesta correcta.\n\nTexto:\n{texto_base}"
+                f"A partir del següent text, genera un test tipus test de {num_preguntas} preguntes "
+                f"amb 4 opcions (A, B, C, D) i marca la resposta correcta.\n\nText:\n{texto_base}"
             )
             resp = generar_con_reintento(prompt)
             if resp:
@@ -705,42 +702,38 @@ elif opcion == "🎯 Test por Temas":
             renderizar_test_interactivo(st.session_state[key_test], key_test, nombre_tema=tema_sel)
 
 # ------------------------------------------------------------------------------
-# 4. PREGUNTAS DE REPASO
+# 4. PREGUNTES DE REPÀS
 # ------------------------------------------------------------------------------
-elif opcion == "💡 Preguntas de Repaso":
-    st.header("💡 Preguntas de Repaso Rápido")
-    modo = st.radio("Modo:", ["🎯 Repaso de mis Fallos", "🎲 Repaso Aleatorio"])
+elif opcion == "💡 Preguntes de Repàs":
+    st.header("💡 Preguntes de Repàs Ràpid")
+    modo = st.radio("Mode:", ["🎯 Repàs dels meus Errors", "🎲 Repàs Aleatori"])
     
-    if "Fallos" in modo:
+    if "Errors" in modo or "Fallos" in modo:
         if not st.session_state.banco_fallos: 
-            st.info("No hay fallos registrados aún.")
+            st.info("No hi ha errors registrats encara.")
         else:
-            st.success(f"Tienes {len(st.session_state.banco_fallos)} preguntas guardadas de tus fallos anteriores.")
-            # AQUÍ EL CAMBIO: Ya no llamamos a 'generar_con_reintento'. 
-            # Mostramos directamente el banco de fallos en formato interactivo local.
-            if st.button("🚀 Cargar Repaso de Mis Fallos"):
-                # Convertimos tu banco de fallos directamente en el formato que lee tu renderizador
+            st.success(f"Tens {len(st.session_state.banco_fallos)} preguntes guardades dels teus errors anteriors.")
+            if st.button("🚀 Carregar Repàs dels Meus Errors"):
                 texto_banco_local = ""
                 for i, f in enumerate(st.session_state.banco_fallos, 1):
                     texto_banco_local += f"\nPregunta {i}: {f.get('enunciado')}\n"
                     for opcion_letra in ['A', 'B', 'C', 'D']:
                         if f.get(opcion_letra):
                             texto_banco_local += f"- {opcion_letra}) {f[opcion_letra]}\n"
-                    texto_banco_local += f"Respuesta Correcta: {f.get('correcta')}\n"
+                    texto_banco_local += f"Resposta Correcta: {f.get('correcta')}\n"
                 
                 st.session_state.repaso_fallos_activo = texto_banco_local
 
             if "repaso_fallos_activo" in st.session_state:
-                renderizar_test_interactivo(st.session_state.repaso_fallos_activo, "repaso_fallos", nombre_tema="Repaso de Mis Fallos")
+                renderizar_test_interactivo(st.session_state.repaso_fallos_activo, "repaso_fallos", nombre_tema="Repàs dels Meus Errors")
                 
     else:
-        # El repaso aleatorio sí usa la IA porque necesita inventar preguntas nuevas desde cero
-        if st.button("🚀 Generar Repaso Aleatorio"):
-            resp = generar_con_reintento("Genera 10 preguntas de repaso general tipo test para Bombers.")
+        if st.button("🚀 Generar Repàs Aleatori"):
+            resp = generar_con_reintento("Genera 10 preguntes de repàs general tipus test per a Bombers.")
             if resp: 
                 st.session_state.repaso_aleatorio = resp.text
         if "repaso_aleatorio" in st.session_state:
-            renderizar_test_interactivo(st.session_state.repaso_aleatorio, "repaso_rand", nombre_tema="Repaso Aleatorio")
+            renderizar_test_interactivo(st.session_state.repaso_aleatorio, "repaso_rand", nombre_tema="Repàs Aleatori")
 # ------------------------------------------------------------------------------
 # 5. PREPARACIÓN FÍSICA (ESTILO HEVY INTEGRADO)
 # ------------------------------------------------------------------------------
