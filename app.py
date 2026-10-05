@@ -404,23 +404,23 @@ def renderizar_test_interactivo(texto_ia, clave_sesion, nombre_tema="General"):
         st.success(f"🎉 Desat! Nota: {nota_calc}/10")
 
 # ------------------------------------------------------------------------------
-# PANEL DE NAVEGACIÓN LATERAL Y DEFINICIÓN DE OPCIÓN
+# PANEL DE NAVEGACIÓN LATERAL Y DEFINICIÓN DE OPCIÓN (Títulos originales con emojis)
 # ------------------------------------------------------------------------------
 st.sidebar.title("🚒 Panell de Navegació")
 opcion = st.sidebar.radio(
     "Selecciona un mòdul:",
     [
-        "1. Biblioteca Temari",
-        "2. Simulacre d'Examen",
-        "3. Test per Temes",
-        "4. Preguntes de Repàs",
-        "5. Preparació Física",
-        "6. Pla d'Estudi",
-        "7. Flashcards",
-        "8. Esquemes i Taules",
-        "9. Exàmens Oficials",
-        "10. Estadístiques",
-        "11. Tutor IA 24/7"
+        "📚 Biblioteca del Temari",
+        "📝 Simulacre d'Examen",
+        "🎯 Test per Temes",
+        "💡 Preguntes de Repàs",
+        "🏋️‍♂️ Preparació Física",
+        "📅 Pla d'Estudi Personalitzat",
+        "🎴 Flashcards de Memorització",
+        "📄 Esquemes i Taules Tècniques",
+        "🏛️ Preguntes Exàmens Oficials",
+        "📊 Estadístiques i Progressos",
+        "💬 Tutor IA 24/7"
     ]
 )
 
@@ -435,6 +435,9 @@ def limpiar_nombre_archivo(nombre):
     nombre_limpio = re.sub(r'[^\w\s.-]', '', solo_ascii)
     nombre_limpio = nombre_limpio.replace(' ', '_')
     return nombre_limpio
+
+def obtener_texto_acumulado():
+    return "".join(st.session_state.textos_pdfs_temario.values())
 
 # ------------------------------------------------------------------------------
 # 1. BIBLIOTECA DEL TEMARIO (SINCRONIZADA CON SUPABASE)
@@ -517,6 +520,7 @@ if opcion == "📚 Biblioteca del Temari":
                             )
                     except Exception as e:
                         st.error(f"Error en descarregar el PDF per a la visualització: {e}")
+
 # ------------------------------------------------------------------------------
 # 2. SIMULACRE D'EXAMEN
 # ------------------------------------------------------------------------------
@@ -529,12 +533,12 @@ elif opcion == "📝 Simulacre d'Examen":
         tiempo_limite = st.slider("Temps límit (minuts):", 15, 180, 90, 15)
 
     if st.button("🚀 Generar Simulacre"):
-        if verificar_cliente():
+        if client is not None:
             txt_ref = obtener_texto_acumulado()
             prompt = (
                 f"Genera un examen tipus test oficial de {num_preguntas} preguntes amb 4 opcions (A, B, C, D), "
                 f"resposta correcta i explicació. "
-                f"Les preguntes s'han de generar estrictament sobre el temari dels PDF pujats a la biblioteca del temari:\n\n"
+                f"Les preguntes s'han de generar estrictament sobre el temari dels PDF pujats a la biblioteca del temari i RESPON EN CATALÀ:\n\n"
                 f"{txt_ref[:15000]}"
             )
             with st.spinner("Generant simulacre amb el temari de la biblioteca..."):
@@ -596,7 +600,7 @@ elif opcion == "🎯 Test per Temes":
             texto_base = st.session_state.textos_pdfs_temario[tema_sel]
             prompt = (
                 f"A partir del següent text, genera un test tipus test de {num_preguntas} preguntes "
-                f"amb 4 opcions (A, B, C, D) i marca la resposta correcta.\n\nText:\n{texto_base}"
+                f"amb 4 opcions (A, B, C, D) i marca la resposta correcta. RESPON EN CATALÀ.\n\nText:\n{texto_base}"
             )
             resp = generar_con_reintento(prompt)
             if resp:
@@ -634,7 +638,7 @@ elif opcion == "💡 Preguntes de Repàs":
                 
     else:
         if st.button("🚀 Generar Repàs Aleatori"):
-            resp = generar_con_reintento("Genera 10 preguntes de repàs general tipus test per a Bombers.")
+            resp = generar_con_reintento("Genera 10 preguntes de repàs general tipus test per a Bombers. RESPON EN CATALÀ.")
             if resp: 
                 st.session_state.repaso_aleatorio = resp.text
         if "repaso_aleatorio" in st.session_state:
