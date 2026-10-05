@@ -589,6 +589,39 @@ if opcion == "📚 Biblioteca del Temario":
                         pass
                     st.rerun()
 
+        # ==============================================================================
+        # VISOR Y ESTUDIO DE TEMARIOS
+        # ==============================================================================
+        st.markdown("---")
+        st.subheader("👀 Visor de Documentos")
+        
+        pdf_seleccionado = st.selectbox("Selecciona el temario que quieres visualizar:", nombres_nube, key="visor_temario_select")
+        
+        if pdf_seleccionado:
+            if st.button("📖 Cargar y Ver Documento", key="btn_cargar_visor"):
+                with st.spinner("Descargando documento desde la nube..."):
+                    try:
+                        ruta_archivo = f"temarios/{pdf_seleccionado}" if not pdf_seleccionado.startswith("temarios/") else pdf_seleccionado
+                        response_bytes = supabase.storage.from_("temarios").download(ruta_archivo)
+                        
+                        if response_bytes:
+                            import base64
+                            base64_pdf = base64.b64encode(response_bytes).decode('utf-8')
+                            altura_visor = st.slider("Ajustar altura del visor (px):", 400, 1000, 700, 50, key="slider_altura_visor")
+                            
+                            pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="{altura_visor}px" type="application/pdf"></iframe>'
+                            st.markdown(pdf_display, unsafe_allow_html=True)
+                            
+                            st.markdown("---")
+                            st.download_button(
+                                label=f"📥 Descargar {pdf_seleccionado}",
+                                data=response_bytes,
+                                file_name=pdf_seleccionado,
+                                mime="application/pdf",
+                                key="btn_descarga_visor"
+                            )
+                    except Exception as e:
+                        st.error(f"Error al descargar el PDF para visualización: {e}")
 # ------------------------------------------------------------------------------
 # 2. SIMULACRO DE EXAMEN
 # ------------------------------------------------------------------------------
