@@ -735,10 +735,10 @@ elif opcion == "💡 Preguntes de Repàs":
         if "repaso_aleatorio" in st.session_state:
             renderizar_test_interactivo(st.session_state.repaso_aleatorio, "repaso_rand", nombre_tema="Repàs Aleatori")
 # ------------------------------------------------------------------------------
-# 5. PREPARACIÓ FÍSICA (ESTIL HEVY INTEGRAT)
+# 5. PREPARACIÓN FÍSICA (ESTILO HEVY INTEGRAT)
 # ------------------------------------------------------------------------------
-elif opcion == "🏋️‍♂️ Preparació Física":
-    st.header("🏋️‍♂️ Preparació Física & Progrés")
+elif opcion == "🏋️‍♂️ Preparación Física":
+    st.header("🏋️‍♂️ Preparación Física & Progreso")
     
     # Assegurar variables per evitar fallades en blanc
     if "mis_rutinas" not in st.session_state:
@@ -748,25 +748,25 @@ elif opcion == "🏋️‍♂️ Preparació Física":
     if "historial_carreras" not in st.session_state:
         st.session_state.historial_carreras = []
     
-    lista_ej_disponibles = globals().get("LISTA_EJERCICIOS_HEAVY", ["Dominades", "Press Banca", "Sentadilla", "Pes Mort", "Cursa"])
+    lista_ej_disponibles = globals().get("LISTA_EJERCICIOS_HEAVY", ["Press Banca", "Dominades", "Sentadilla", "Peso Muerto", "Cursa"])
 
-    t1, t2, t3, t4 = st.tabs(["🏋️‍♂️ Entrenar Rutina", "➕ Crear / Gestionar Rutines", "📈 Gràfiques de Progrés", "🏃‍♂️ Entrenaments de Carrera"])
+    t1, t2, t3, t4 = st.tabs(["🏋️‍♂️ Entrenar Rutina", "➕ Crear / Gestionar Rutinas", "📈 Gráficas de Progreso", "🏃‍♂️ Entrenamientos de Carrera"])
     
     with t1:
         if not st.session_state.mis_rutinas:
-            st.info("No tens cap rutina creada encara. Ves a la pestanya 'Crear / Gestionar Rutines' per afegir-ne una.")
+            st.info("No tienes ninguna rutina creada todavía. Ve a la pestaña 'Crear / Gestionar Rutinas' para añadir una.")
         else:
-            rutina_sel = st.selectbox("Selecciona la teva rutina d'avui:", list(st.session_state.mis_rutinas.keys()), key="select_rutina_hoy")
-            fecha_entreno = st.date_input("Data de l'entrenament:", value=datetime.date.today(), key="fecha_entreno_hoy")
+            rutina_sel = st.selectbox("Selecciona tu rutina de hoy:", list(st.session_state.mis_rutinas.keys()), key="select_rutina_hoy")
+            fecha_entreno = st.date_input("Fecha del entrenamiento:", value=datetime.date.today(), key="fecha_entreno_hoy")
             
-            st.markdown(f"### Exercicis de: {rutina_sel}")
+            st.markdown(f"### Ejercicios de: {rutina_sel}")
             ejercicios_rutina = st.session_state.mis_rutinas[rutina_sel]
             
             nuevos_registros = []
             
             for ej in ejercicios_rutina:
                 st.markdown(f"#### 🔹 {ej}")
-                num_series = st.number_input(f"Nombre de sèries per a {ej}:", 1, 6, 3, key=f"ns_{ej}")
+                num_series = st.number_input(f"Número de series para {ej}:", 1, 6, 3, key=f"ns_{ej}")
                 
                 for s in range(1, int(num_series) + 1):
                     peso_anterior_s = 0.0
@@ -792,16 +792,16 @@ elif opcion == "🏋️‍♂️ Preparació Física":
                         if peso_anterior_s > 0:
                             st.markdown(f"🕒 *Ant: {peso_anterior_s}kg × {reps_anterior_s}r*")
                         else:
-                            st.markdown("🕒 *Ant: Sense dades*")
+                            st.markdown("🕒 *Ant: Sin datos*")
                             
-                    with col_s1: st.text(f"Sèrie {s}")
+                    with col_s1: st.text(f"Serie {s}")
                     with col_s2: 
-                        peso_s = st.number_input(f"Pes (kg) - {ej} S{s}", min_value=0.0, value=peso_anterior_s, step=0.5, key=f"peso_{ej}_{s}")
+                        peso_s = st.number_input(f"Peso (kg) - {ej} S{s}", min_value=0.0, value=peso_anterior_s, step=0.5, key=f"peso_{ej}_{s}")
                     with col_s3: 
                         reps_s = st.number_input(f"Reps - {ej} S{s}", min_value=1, max_value=100, value=reps_anterior_s, step=1, key=f"reps_{ej}_{s}")
                     
                     if peso_anterior_s > 0 and (peso_s > peso_anterior_s or (peso_s == peso_anterior_s and reps_s > reps_anterior_s)):
-                        st.success(f"🏆 ¡Rècord superat a {ej} (Sèrie {s})! 🥇")
+                        st.success(f"🏆 ¡Récord superado en {ej} (Serie {s})! 🥇")
                     
                     nuevos_registros.append({
                         "Fecha": str(fecha_entreno),
@@ -813,14 +813,14 @@ elif opcion == "🏋️‍♂️ Preparació Física":
                     })
                 st.markdown("---")
             
-            if st.button("💾 Guardar Entrenament i Actualitzar Progrés", key="btn_guardar_entreno_fuerza"):
+            if st.button("💾 Guardar Entrenamiento y Actualizar Progreso", key="btn_guardar_entreno_fuerza"):
                 st.session_state.historial_marcas.extend(nuevos_registros)
                 if "guardar_marcas_nube" in globals():
                     guardar_marcas_nube()
-                st.success("🎉 ¡Entrenament guardat amb èxit!")
+                st.success("🎉 ¡Entrenamiento guardado con éxito en la nube!")
 
     with t2:
-        st.subheader("Crea i gestiona les teves rutines d'entrenament")
+        st.subheader("Crea y gestiona tus rutinas de entrenamiento")
         
         if "editando_rutina" not in st.session_state:
             st.session_state.editando_rutina = None
@@ -832,14 +832,14 @@ elif opcion == "🏋️‍♂️ Preparació Física":
         rutina_en_edicion = st.session_state.editando_rutina
 
         if rutina_en_edicion:
-            st.info(f"✏️ Estàs editant la rutina: **{rutina_en_edicion}**.")
+            st.info(f"✏️ Estás editando la rutina: **{rutina_en_edicion}**.")
 
-        nombre_nueva_rutina = st.text_input("Nom de la rutina:", value=st.session_state.form_nombre_rutina, key="input_nombre_rutina_t2")
-        lista_ejercicios = st.multiselect("Selecciona o deselecciona exercicis:", lista_ej_disponibles, default=st.session_state.form_ejs_rutina, key="multiselect_ejercicios_t2")
+        nombre_nueva_rutina = st.text_input("Nombre de la rutina:", value=st.session_state.form_nombre_rutina, key="input_nombre_rutina_t2")
+        lista_ejercicios = st.multiselect("Selecciona o deselecciona ejercicios:", lista_ej_disponibles, default=st.session_state.form_ejs_rutina, key="multiselect_ejercicios_t2")
         
         col_b1, col_b2 = st.columns([0.8, 0.2])
         with col_b1:
-            btn_texto = "💾 Desar Canvis de la Rutina" if rutina_en_edicion else "➕ Desar Nova Rutina"
+            btn_texto = "💾 Guardar Cambios de la Rutina" if rutina_en_edicion else "➕ Guardar Nueva Rutina"
             if st.button(btn_texto, key="btn_guardar_rutina_accion_t2"):
                 if nombre_nueva_rutina and lista_ejercicios:
                     if rutina_en_edicion and rutina_en_edicion != nombre_nueva_rutina:
@@ -850,14 +850,14 @@ elif opcion == "🏋️‍♂️ Preparació Física":
                     st.session_state.editando_rutina = None
                     st.session_state.form_nombre_rutina = ""
                     st.session_state.form_ejs_rutina = []
-                    st.success(f"¡Rutina '{nombre_nueva_rutina}' desada amb èxit!")
+                    st.success(f"¡Rutina '{nombre_nueva_rutina}' guardada con éxito!")
                     st.rerun()
                 else:
-                    st.warning("Introdueix un nom i selecciona almenys un exercici.")
+                    st.warning("Introduce un nombre y selecciona al menos un ejercicio.")
         
         with col_b2:
             if rutina_en_edicion:
-                if st.button("❌ Cancel·lar", key="cancelar_edicion_rutina_t2"):
+                if st.button("❌ Cancelar", key="cancelar_edicion_rutina_t2"):
                     st.session_state.editando_rutina = None
                     st.session_state.form_nombre_rutina = ""
                     st.session_state.form_ejs_rutina = []
@@ -865,7 +865,7 @@ elif opcion == "🏋️‍♂️ Preparació Física":
 
         if st.session_state.mis_rutinas:
             st.markdown("---")
-            st.markdown("### Les teves rutines actuals:")
+            st.markdown("### TUS RUTINAS ACTUALES:")
             for i, r_nombre in enumerate(list(st.session_state.mis_rutinas.keys())):
                 r_ejs = st.session_state.mis_rutinas[r_nombre]
                 c_r1, c_r2, c_r3 = st.columns([0.65, 0.17, 0.18])
@@ -883,58 +883,62 @@ elif opcion == "🏋️‍♂️ Preparació Física":
                         st.rerun()
 
     with t3:
-        st.subheader("📈 Gràfiques de Progrés")
-        tipo_progreso = st.radio("Selecciona el tipus de progrés:", ["🏋️‍♂️ Força (Gym)", "🏃‍♂️ Carrera"], horizontal=True, key="radio_tipo_progreso")
+        st.subheader("📈 Gráficas de Progreso")
+        tipo_progreso = st.radio("Selecciona el tipo de progreso a visualizar:", ["🏋️‍♂️ Fuerza (Gym)", "🏃‍♂️ Carrera"], horizontal=True, key="radio_tipo_progreso")
         
-        if "Força" in tipo_progreso:
+        if "Fuerza" in tipo_progreso:
             if st.session_state.historial_marcas and st.session_state.mis_rutinas:
                 df_marcas = pd.DataFrame(st.session_state.historial_marcas)
-                rutina_grafico = st.selectbox("Selecciona la rutina:", list(st.session_state.mis_rutinas.keys()), key="select_rutina_grafico")
+                rutina_grafico = st.selectbox("Selecciona la rutina para ver el desglose de sus ejercicios:", list(st.session_state.mis_rutinas.keys()), key="select_rutina_grafico")
                 if rutina_grafico:
                     for ej in st.session_state.mis_rutinas[rutina_grafico]:
                         st.markdown(f"#### 📊 {ej}")
                         df_filtrado = df_marcas[df_marcas["Ejercicio"] == ej]
                         if not df_filtrado.empty:
                             max_peso = df_filtrado["Peso (kg)"].max()
-                            st.metric(label=f"🏆 Rècord (PR) a {ej}", value=f"{max_peso} kg")
+                            st.metric(label=f"🏆 Récord Personal (PR) en {ej}", value=f"{max_peso} kg")
                             st.line_chart(df_filtrado.set_index("Fecha")[["Peso (kg)"]])
                         else:
-                            st.info(f"Sense registres per a {ej}.")
+                            st.info(f"Todavía no hay registros guardados para {ej}.")
             else:
-                st.info("Encara no hi ha registres de força.")
+                st.info("Todavía no hay registros de entrenamientos de fuerza o rutinas guardadas.")
         else:
             if st.session_state.historial_carreras:
                 df_carreras = pd.DataFrame(st.session_state.historial_carreras)
+                st.markdown("#### 📊 Evolución de Kilómetros por Sesión")
                 st.line_chart(df_carreras.set_index("Fecha")[["Kilómetros (km)"]])
+                st.markdown("#### 📋 Historial Completo de Carrera")
                 st.dataframe(df_carreras, use_container_width=True)
             else:
-                st.info("Encara no hi ha registres de carrera.")
+                st.info("Todavía no hay registros de entrenamientos de carrera guardados.")
 
     with t4:
-        st.subheader("🏃‍♂️ Registrar Entrenament de Carrera")
-        fecha_carrera = st.date_input("Data de la carrera:", value=datetime.date.today(), key="fecha_carrera_input_t4")
+        st.subheader("🏃‍♂️ Registrar Entrenamiento de Carrera")
+        fecha_carrera = st.date_input("Fecha de la carrera:", value=datetime.date.today(), key="fecha_carrera_input_t4")
         col_c1, col_c2 = st.columns(2)
         with col_c1:
-            tipo_carrera = st.text_input("Tipus d'entreno:", value="Rodatge Suau", key="input_tipo_carrera_t4")
-            n_series = st.number_input("Sèries:", min_value=0, step=1, value=0, key="input_n_series_t4")
-            km_totales = st.number_input("Quilòmetres (km):", min_value=0.0, step=0.1, value=5.0, key="input_km_totales_t4")
+            tipo_carrera = st.text_input("Tipo de entreno / Nombre (ej: Series 400m, Rodaje Suave):", value="Rodaje Suave", key="input_tipo_carrera_t4")
+            n_series = st.number_input("Cantidad de series (0 si es continuo):", min_value=0, step=1, value=0, key="input_n_series_t4")
+            km_totales = st.number_input("Kilómetros totales (km):", min_value=0.0, step=0.1, value=5.0, key="input_km_totales_t4")
         with col_c2:
-            tiempo_total = st.text_input("Temps total:", value="25:00", key="input_tiempo_total_t4")
-            ritmo_medio = st.text_input("Ritme mitjà:", value="5:00", key="input_ritmo_medio_t4")
+            tiempo_total = st.text_input("Tiempo total (ej: 25:00):", value="25:00", key="input_tiempo_total_t4")
+            ritmo_medio = st.text_input("Ritmo medio (ej: 4:30 min/km):", value="5:00", key="input_ritmo_medio_t4")
 
-        if st.button("💾 Desar Carrera", key="btn_guardar_carrera_t4"):
+        if st.button("💾 Guardar Entrenamiento de Carrera y Progreso", key="btn_guardar_carrera_t4"):
             st.session_state.historial_carreras.append({
                 "Fecha": str(fecha_carrera), "Entreno": tipo_carrera, "Series": n_series,
                 "Kilómetros (km)": km_totales, "Tiempo": tiempo_total, "Ritmo": ritmo_medio
             })
-            st.success("🎉 ¡Entrenament de carrera desat!")
+            if "guardar_carreras_nube" in globals():
+                guardar_carreras_nube()
+            st.success("🎉 ¡Entrenamiento de carrera guardado y añadido al progreso con éxito!")
 
     # ------------------------------------------------------------------------------
     # REGISTRE DE LES NOVES PROVES FÍSIQUES - BOMBERS GENERALITAT
     # ------------------------------------------------------------------------------
     st.markdown("---")
     st.markdown("### 🚒 Simulacre de les Noves Proves Oficials")
-    tipo_prueba_oficial = st.selectbox("Selecciona la prova oficial:", [
+    tipo_prueba_oficial = st.selectbox("Selecciona la prova oficial a registrar:", [
         "1. Intervenció Estructural (Circuit)",
         "2. Intervenció Forestal (Rectes + Slam Ball)",
         "3. Prova Aquàtica / Rescat (6 fases)"
@@ -943,44 +947,44 @@ elif opcion == "🏋️‍♂️ Preparació Física":
     fecha_oficial = st.date_input("Data del simulacre:", value=datetime.date.today(), key="fecha_simulacre_oficial_bombers")
 
     if "1. Intervenció Estructural" in tipo_prueba_oficial:
-        st.info("Circuit continu de Bombers.")
+        st.info("Circuit continu: Transport de discos, Step-Up, kettlebells, arrossegament/empenta de trineu, obstacle, maniquí i esprint.")
         c1, c2 = st.columns(2)
-        with c1: temps_estructural = st.text_input("Temps total:", value="03:45", key="t_est")
-        with c2: penalitzacions_est = st.number_input("Penalització (s):", min_value=0, step=1, value=0, key="p_est")
+        with c1: temps_estructural = st.text_input("Temps total empleat (ej: 03:45):", value="03:45", key="t_est")
+        with c2: penalitzacions_est = st.number_input("Segons de penalització (errors):", min_value=0, step=1, value=0, key="p_est")
         
-        if st.button("💾 Desar Registre Estructural", key="btn_est"):
+        if st.button("💾 Guardar Registre Estructural", key="btn_est"):
             reg_est = {"Data": str(fecha_oficial), "Prova": "Intervenció Estructural", "Temps/Marca": temps_estructural, "Penalització (s)": penalitzacions_est}
             if "historial_proves_oficials" not in st.session_state: st.session_state.historial_proves_oficials = []
             st.session_state.historial_proves_oficials.append(reg_est)
-            st.success("🎉 ¡Desat correctament!")
+            st.success("🎉 ¡Simulacre estructural guardat correctament!")
 
     elif "2. Intervenció Forestal" in tipo_prueba_oficial:
-        st.info("Prova progressiva forestal.")
+        st.info("Prova progressiva: Alterna desplaçaments de 20m amb llançaments de Slam Ball per blocs (8, 10 o 12 rectes).")
         f1, f2 = st.columns(2)
-        with f1: bloc_assolit = st.selectbox("Últim bloc:", ["Bloc 1", "Bloc 2", "Bloc 3"], key="b_for")
-        with f2: temps_forestal = st.text_input("Temps total:", value="02:30", key="t_for")
+        with f1: bloc_assolit = st.selectbox("Últim bloc completat:", ["Bloc 1 (8 rectes + 16 Slam Ball)", "Bloc 2 (10 rectes + 20 Slam Ball)", "Bloc 3 (12 rectes + 24 Slam Ball)"], key="b_for")
+        with f2: temps_forestal = st.text_input("Temps total (ej: 02:30):", value="02:30", key="t_for")
             
-        if st.button("💾 Desar Registre Forestal", key="btn_for"):
-            reg_for = {"Data": str(fecha_oficial), "Prova": f"Forestal - {bloc_assolit}", "Temps/Marca": temps_forestal, "Penalització (s)": 0}
+        if st.button("💾 Guardar Registre Forestal", key="btn_for"):
+            reg_for = {"Data": str(fecha_oficial), "Prova": f"Intervenció Forestal - {bloc_assolit}", "Temps/Marca": temps_forestal, "Penalització (s)": 0}
             if "historial_proves_oficials" not in st.session_state: st.session_state.historial_proves_oficials = []
             st.session_state.historial_proves_oficials.append(reg_for)
-            st.success("🎉 ¡Desat correctament!")
+            st.success("🎉 ¡Simulacre forestal guardat correctament!")
 
     else:
-        st.info("Prova Aquàtica de Rescat.")
+        st.info("Prova Aquàtica de Rescat: Entrada, 15m apnea, 30s flotació, crol lliure, crol de salvament i remolc de maniquí (6 fases consecutives).")
         a1, a2 = st.columns(2)
-        with a1: temps_aigua = st.text_input("Temps total:", value="01:55", key="t_aq")
-        with a2: fase_fallida = st.selectbox("Incidència:", ["Cap", "Apnea", "Flotació", "Maniquí"], key="f_aq")
+        with a1: temps_aigua = st.text_input("Temps total de la prova aquàtica (ej: 01:55):", value="01:55", key="t_aq")
+        with a2: fase_fallida = st.selectbox("Fase amb més dificultat o error:", ["Cap (Completat)", "Fase 1: Entrada", "Fase 2: Apnea 15m", "Fase 3: Flotació 30s", "Fase 4: Crol lliure", "Fase 5: Crol salvament", "Fase 6: Remolc maniquí"], key="f_aq")
 
-        if st.button("💾 Desar Registre Aquàtic", key="btn_aq"):
-            reg_aq = {"Data": str(fecha_oficial), "Prova": f"Aquàtica ({fase_fallida})", "Temps/Marca": temps_aigua, "Penalització (s)": 0}
+        if st.button("💾 Guardar Registre Aquàtic", key="btn_aq"):
+            reg_aq = {"Data": str(fecha_oficial), "Prova": f"Aquàtica (Incidència: {fase_fallida})", "Temps/Marca": temps_aigua, "Penalització (s)": 0}
             if "historial_proves_oficials" not in st.session_state: st.session_state.historial_proves_oficials = []
             st.session_state.historial_proves_oficials.append(reg_aq)
-            st.success("🎉 ¡Desat correctament!")
+            st.success("🎉 ¡Registre aquàtic guardat correctament!")
 
     if st.session_state.get("historial_proves_oficials"):
         st.markdown("---")
-        st.markdown("### 📋 Historial de Simulacres Oficials")
+        st.markdown("### 📋 Historial de Simulacres de las Nuevas Pruebas")
         st.dataframe(pd.DataFrame(st.session_state.historial_proves_oficials), use_container_width=True)
 # ------------------------------------------------------------------------------
 # 6. PLAN DE ESTUDIO
