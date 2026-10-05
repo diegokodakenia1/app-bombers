@@ -1109,6 +1109,7 @@ elif opcion == "📅 Plan de Estudio Personalizado":
     elif "plan_estudio_texto_raw" in st.session_state and st.session_state.plan_estudio_texto_raw:
         st.markdown("---")
         st.markdown(st.session_state.plan_estudio_texto_raw)
+
 # ------------------------------------------------------------------------------
 # 7. FLASHCARDS
 # ------------------------------------------------------------------------------
@@ -1117,7 +1118,8 @@ elif opcion == "🎴 Flashcards de Memorización":
     docs = list(st.session_state.textos_pdfs_temario.keys())
     t1, t2 = st.tabs(["➕ Generar Flashcards", "🎴 Ver Flashcards Guardadas"])
     with t1:
-        if not docs: st.warning("Sube PDFs primero.")
+        if not docs: 
+            st.warning("Sube PDFs primero.")
         else:
             ts = st.selectbox("Tema base:", docs)
             nf = st.slider("Número de flashcards:", 3, 15, 8)
@@ -1133,9 +1135,11 @@ elif opcion == "🎴 Flashcards de Memorización":
                                 st.session_state.flashcards.append(c)
                         guardar_flashcards_disco()
                         st.success("¡Flashcards guardadas!")
-                    except Exception as e: st.error(f"Error procesando JSON: {e}")
+                    except Exception as e: 
+                        st.error(f"Error procesando JSON: {e}")
     with t2:
-        if not st.session_state.flashcards: st.info("No hay flashcards.")
+        if not st.session_state.flashcards: 
+            st.info("No hay flashcards.")
         else:
             for fc in st.session_state.flashcards:
                 with st.expander(f"[{fc.get('tema')}] {fc.get('anverso')}"):
@@ -1147,13 +1151,15 @@ elif opcion == "🎴 Flashcards de Memorización":
 elif opcion == "📄 Esquemas y Tablas Técnicas":
     st.header("📄 Generador de Material Sintético")
     docs = list(st.session_state.textos_pdfs_temario.keys())
-    if not docs: st.warning("Sube PDFs.")
+    if not docs: 
+        st.warning("Sube PDFs.")
     else:
         ts = st.selectbox("Tema:", docs)
         tipo = st.selectbox("Formato:", ["Maquetado Mnemotécnico", "Tabla Comparativa", "Resumen Ejecutivo"])
         if st.button("Generar Esquema"):
             resp = generar_con_reintento(f"Genera un recurso tipo '{tipo}' enfocado a oposiciones de Bombers basado en: {st.session_state.textos_pdfs_temario[ts][:12000]}")
-            if resp: st.markdown(resp.text)
+            if resp: 
+                st.markdown(resp.text)
 
 # ------------------------------------------------------------------------------
 # 9. EXÁMENES OFICIALES
@@ -1169,8 +1175,10 @@ elif opcion == "🏛️ Preguntas Exámenes Oficiales":
                     supabase.storage.from_("temarios").upload(f"oficiales/{nombre_limpio_of}", arch.getvalue(), {"content-type": "application/pdf", "upsert": "true"})
                     arch.seek(0)
                     txt = "".join([p.extract_text() + "\n" for p in pypdf.PdfReader(arch).pages if p.extract_text()])
-                    if txt.strip(): st.session_state.textos_pdfs_oficiales[nombre_limpio_of] = txt
-                except Exception as e: st.error(f"Error: {e}")
+                    if txt.strip(): 
+                        st.session_state.textos_pdfs_oficiales[nombre_limpio_of] = txt
+                except Exception as e: 
+                    st.error(f"Error: {e}")
     
     docs_oficiales = list(st.session_state.textos_pdfs_oficiales.keys())
     if docs_oficiales:
@@ -1184,7 +1192,6 @@ elif opcion == "🏛️ Preguntas Exámenes Oficiales":
         with c2: 
             tiempo_lim_of = st.slider("Tiempo límite (minutos):", 15, 180, 45, 15, key="slider_tiempo_oficiales")
         
-        # Pestañas para elegir el modo de generación
         modo_gen_of = st.radio(
             "Selecciona el modo de examen oficial:",
             ["Simulacro Mixto (Todos los exámenes)", "Test Específico por Temario Oficial"],
@@ -1249,14 +1256,16 @@ elif opcion == "📊 Estadísticas y Progresos":
             st.metric("Nota Media Simulacros", f"{df['nota'].mean():.2f}")
             st.dataframe(df, use_container_width=True)
             st.line_chart(df.set_index("fecha")[["nota"]])
-        else: st.info("Sin registros de simulacros.")
+        else: 
+            st.info("Sin registros de simulacros.")
     with t2:
         if st.session_state.historico_test_temas:
             df2 = pd.DataFrame(st.session_state.historico_test_temas)
             st.metric("Nota Media Temas", f"{df2['nota'].mean():.2f}")
             st.dataframe(df2, use_container_width=True)
             st.line_chart(df2.set_index("fecha")[["nota"]])
-        else: st.info("Sin registros de test por temas.")
+        else: 
+            st.info("Sin registros de test por temas.")
 
 # ------------------------------------------------------------------------------
 # 11. TUTOR IA
@@ -1266,4 +1275,5 @@ elif opcion == "💬 Tutor IA 24/7":
     d = st.text_input("Consulta tu duda técnica:")
     if st.button("Preguntar al Tutor") and d:
         resp = generar_con_reintento(d)
-        if resp: st.markdown(resp.text)
+        if resp: 
+            st.markdown(resp.text)
