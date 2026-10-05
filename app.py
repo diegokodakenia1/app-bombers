@@ -722,7 +722,7 @@ elif opcion == "💡 Preguntas de Repaso":
 # 5. PREPARACIÓN FÍSICA (ESTILO HEVY INTEGRADO)
 # ------------------------------------------------------------------------------
 elif opcion == "🏋️‍♂️ Preparación Física":
-    st.header("🏋️‍♂️ Preparación Física & Progreso")
+    st.header("🏋️️‍♂️ Preparación Física & Progreso")
     t1, t2, t3, t4 = st.tabs(["🏋️‍♂️ Entrenar Rutina", "➕ Crear / Gestionar Rutinas", "📈 Gráficas de Progreso", "🏃‍♂️ Entrenamientos de Carrera"])
     
     with t1:
@@ -740,34 +740,56 @@ elif opcion == "🏋️‍♂️ Preparación Física":
             for ej in ejercicios_rutina:
                 st.markdown(f"#### 🔹 {ej}")
                 
-                # --- BUSCAR HISTORIAL ANTERIOR (ESTILO HEVY) ---
-                peso_anterior = 0.0
-                reps_anterior = 0
-                if st.session_state.get("historial_marcas"):
-                    df_h = pd.DataFrame(st.session_state.historial_marcas)
-                    df_ej = df_h[df_h["Ejercicio"] == ej]
-                    if not df_ej.empty:
-                        ultimo_reg = df_ej.iloc[-1]
-                        peso_anterior = float(ultimo_reg.get("Peso (kg)", 0.0))
-                        reps_anterior = int(ultimo_reg.get("Reps", 0))
-
                 num_series = st.number_input(f"Número de series para {ej}:", 1, 6, 3, key=f"ns_{ej}")
                 
                 for s in range(1, int(num_series) + 1):
+                    # --- BUSCAR HISTORIAL ANTERIOR ESPECÍFICO PARA ESTA SERIE ---
+                    peso_anterior_s = 0.0
+                    reps_anterior_s = 10
+                    if st.session_state.get("historial_marcas"):
+                        df_h = pd.DataFrame(st.session_state.historial_marcas)
+                        df_ej = df_h[(df_h["Ejercicio"] == ej) & (df_h["Serie"] == s)]
+                        if not df_ej.empty:
+                            ultimo_reg_s = df_ej.iloc[-1]
+                            peso_anterior_s = float(ultimo_reg_s.get("Peso (kg)", 0.0))
+                            reps_anterior_s = int(ultimo_reg_s.get("Reps", 10))
+                        else:
+                            # Si no hay registro específico para esta serie, buscar el último general del ejercicio
+                            df_ej_gen = df_h[df_h["Ejercicio"] == ej]
+                            if not df_ej_gen.empty:
+                                ultimo_reg_gen = df_ej_gen.iloc[-1]
+                                peso_anterior_s = float(ultimo_reg_gen.get("Peso (kg)", 0.0))
+                                reps_anterior_s = int(ultimo_reg_gen.get("Reps", 10))
+
                     col_prev, col_s1, col_s2, col_s3 = st.columns([1.2, 0.8, 1, 1])
                     
                     with col_prev:
-                        if peso_anterior > 0:
-                            st.markdown(f"🕒 *Ant: {peso_anterior}kg × {reps_anterior}r*")
+                        if peso_anterior_s > 0:
+                            st.markdown(f"🕒 *Ant: {peso_anterior_s}kg × {reps_anterior_s}r*")
                         else:
                             st.markdown("🕒 *Ant: Sin datos*")
                             
                     with col_s1: st.text(f"Serie {s}")
-                    with col_s2: peso_s = st.number_input(f"Peso (kg) - {ej} S{s}", 0.0, step=0.5, key=f"peso_{ej}_{s}")
-                    with col_s3: reps_s = st.number_input(f"Reps - {ej} S{s}", 1, 100, 10, key=f"reps_{ej}_{s}")
+                    with col_s2: 
+                        peso_s = st.number_input(
+                            f"Peso (kg) - {ej} S{s}", 
+                            min_value=0.0, 
+                            value=peso_anterior_s, 
+                            step=0.5, 
+                            key=f"peso_{ej}_{s}"
+                        )
+                    with col_s3: 
+                        reps_s = st.number_input(
+                            f"Reps - {ej} S{s}", 
+                            min_value=1, 
+                            max_value=100, 
+                            value=reps_anterior_s, 
+                            step=1, 
+                            key=f"reps_{ej}_{s}"
+                        )
                     
                     # --- DETECCIÓN DE RÉCORD EN TIEMPO REAL (MEDALLA HEVY) ---
-                    if peso_anterior > 0 and (peso_s > peso_anterior or (peso_s == peso_anterior and reps_s > reps_anterior)):
+                    if peso_anterior_s > 0 and (peso_s > peso_anterior_s or (peso_s == peso_anterior_s and reps_s > reps_anterior_s)):
                         st.success(f"🏆 ¡Récord superado en {ej} (Serie {s})! 🥇")
                     
                     nuevos_registros.append({
@@ -905,9 +927,9 @@ elif opcion == "🏋️‍♂️ Preparación Física":
     with t3:
         st.subheader("📈 Gráficas de Progreso")
         
-        tipo_progreso = st.radio("Selecciona el tipo de progreso a visualizar:", ["🏋️‍♂️ Fuerza (Gym)", "🏃‍♂️ Carrera"], horizontal=True)
+        tipo_progreso = st.radio("Selecciona el tipo de progreso a visualizar:", ["🏋️️‍♂️ Fuerza (Gym)", "🏃‍♂️ Carrera"], horizontal=True)
         
-        if tipo_progreso == "🏋️‍♂️ Fuerza (Gym)":
+        if tipo_progreso == "🏋️‍♂️️ Fuerza (Gym)":
             if st.session_state.get("historial_marcas") and st.session_state.get("mis_rutinas"):
                 df_marcas = pd.DataFrame(st.session_state.historial_marcas)
                 
