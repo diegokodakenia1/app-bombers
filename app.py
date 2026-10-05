@@ -1145,11 +1145,11 @@ elif "10." in opcion_str or "Estadísticas" in opcion_str or "Estadístiques" in
 
 
 # ------------------------------------------------------------------------------
-# 11. TUTOR IA 24/7
+# 11. TUTOR IA 24/7 (Amb opció de xat per veu i transcripció automàtica)
 # ------------------------------------------------------------------------------
 elif opcion == "💬 Tutor IA 24/7":
     st.header("💬 Tutor IA 24/7")
-    st.write("Resol dubtes al moment sobre qualsevol tema del temari de Bombers de la Generalitat (escrit o per veu).")
+    st.write("Resol dubtes al moment sobre qualsevol tema del temari de Bombers de la Generalitat.")
     
     docs_tutor = list(st.session_state.textos_pdfs_temario.keys())
     tema_contexto = st.selectbox("Selecciona un tema de referència (opcional):", ["Cap (General)"] + docs_tutor)
@@ -1162,45 +1162,40 @@ elif opcion == "💬 Tutor IA 24/7":
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    # Selector de mètode d'entrada: Text o Veu
-    metodo_entrada = st.radio("Com vols fer la consulta?", ["⌨️ Escriure text", "🎤 Enviar nota de voz"], horizontal=True)
-    
-    pregunta_usuario = None
+    # Entrada de text tradicional
+    pregunta_usuario = st.chat_input("Escriu el teu dubte sobre l'oposició...")
 
-    if metodo_entrada == "⌨️ Escriure text":
-        pregunta_usuario = st.chat_input("Escriu el teu dubte sobre l'oposició...")
-    else:
-        st.markdown("**Grava el teu dubte de veu:**")
-        audio_file = st.audio_input("Fes clic al micròfon per gravar:")
-        if audio_file is not-None and audio_file != st.session_state.get("ultimo_audio_procesado"):
-            with st.spinner("Transcribint i processant l'àudio amb la IA..."):
-                try:
-                    # Guardar referencia para no procesarlo en bucle
-                    st.session_state["ultimo_audio_procesado"] = audio_file
+    # Widget de gravació de veu integrat al xat
+    st.markdown("---")
+    st.markdown("🎙️ **O pots parlar directament amb el tutor:**")
+    audio_file = st.audio_input("Fes clic al micròfon per gravar la teva consulta:")
+
+    # Si l'usuari grava un àudio nou
+    if audio_file is not None and audio_file != st.session_state.get("ultimo_audio_procesado"):
+        with st.spinner("Transcribint i analitzant la teva veu..."):
+            try:
+                st.session_state["ultimo_audio_procesado"] = audio_file
+                audio_bytes = audio_file.getvalue()
+                
+                # Prompt multimodal: la IA escolta l'àudio, el transcrich i respon
+                prompt_audio = [
+                    {"data": audio_bytes, "mime_type": "audio/wav"},
+                    "Transcriu fidelment el que diu l'alumne en aquest àudio i actua com a tutor expert de Bombers de la Generalitat per respondre-li tècnicament en català."
+                ]
+                
+                resp_audio = generar_con_reintento(prompt_audio)
+                if resp_audio:
+                    respuesta_texto = resp_audio.text
                     
-                    # Gemini accepta directament l'àudio si li passem els bytes amb el tipus mime adequat
-                    audio_bytes = audio_file.getvalue()
-                    
-                    prompt_audio_transcripcion = [
-                        {"data": audio_bytes, "mime_type": "audio/wav"},
-                        "Transcriu fidelment aquesta pregunta o dubte de l'alumne i respon directament com a tutor expert de Bombers de la Generalitat en català."
-                    ]
-                    
-                    resp_voz = client.models.generate_content(model=MODELO_IA, contents=prompt_audio_transcripcion)
-                    if resp_voz:
-                        # Extraiem el que ha entès/respost
-                        pregunta_usuario = "[Consulta per veu de l'alumne]"
-                        respuesta_texto = resp_voz.text
-                        
-                        # Afegim a l'historial
-                        st.session_state.mensajes_tutor.append({"role": "user", "content": "🎤 *[Missatge de veu enviat]*"})
-                        st.session_state.mensajes_tutor.append({"role": "assistant", "content": respuesta_texto})
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"Error al processar l'àudio: {e}")
+                    # Afegim a l'historial simulant la intercepció de veu
+                    st.session_state.mensajes_tutor.append({"role": "user", "content": "🎤 *(Missatge de veu enviat)*"})
+                    st.session_state.mensajes_tutor.append({"role": "assistant", "content": respuesta_texto})
+                    st.rerun()
+            except Exception as e:
+                st.error(f"Error al processar l'àudio: {e}")
 
     # Processament si s'ha escrit per teclat
-    if pregunta_usuario and metodo_entrada == "⌨️ Escriure text":
+    if pregunta_usuario:
         st.session_state.mensajes_tutor.append({"role": "user", "content": pregunta_usuario})
         with st.chat_message("user"):
             st.markdown(pregunta_usuario)
