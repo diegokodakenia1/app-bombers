@@ -991,7 +991,7 @@ elif "Preparación Física" in opcion or "Preparació Física" in opcion:
 # ------------------------------------------------------------------------------
 # 6. PLA D'ESTUDI
 # ------------------------------------------------------------------------------
-elif "Plan de Estudio" in str(opcion) or "Pla d'Estudi" in str(opcion) or "6" in str(opcion):
+elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
     st.header("📅 Planificador Estratègic d'Estudi")
     st.write("Dissenya la teua planificació teórica a llarg termini basada en els PDFs de la teua biblioteca + 7 temes de legislació.")
     
@@ -1008,7 +1008,7 @@ elif "Plan de Estudio" in str(opcion) or "Pla d'Estudi" in str(opcion) or "6" in
     if st.button("🚀 Generar Pla Estratègic"):
         if client is not None:
             if not dias_estudio:
-                st.warning("Selecciona al menos un dia d'estudi a la setmana.")
+                st.warning("Selecciona al menys un dia d'estudi a la setmana.")
             else:
                 temario_oficial = [
                     "Tema 01: Constitució Espanyola, Estatut d'Autonomia, Administració catalana e institucions",
@@ -1018,33 +1018,13 @@ elif "Plan de Estudio" in str(opcion) or "Pla d'Estudi" in str(opcion) or "6" in
                     "Tema 05: Llei 17/2015 d'igualtat efectiva de dones i hòmens (Cap. 1, 3 i 4)",
                     "Tema 06: Llei 5/1994 de serveis de prevenció i extinció d'incendis i salvaments de Catalunya i Llei 4/1997 de Protecció Civil",
                     "Tema 07: Decret 276/2016 de funcions de guàrdia i sistema de comandament, i Decret 12/2023 de reestructuració del departament d'Interior",
-                    "Tema 08: Teoria del Foc",
-                    "Tema 09: Física",
-                    "Tema 10: Química",
-                    "Tema 11: Electricitat",
-                    "Tema 12: Instal·lacions",
-                    "Tema 13: Hidràulica i Bombes",
-                    "Tema 14: Cartografia i Orientació",
-                    "Tema 15: Construcció",
-                    "Tema 16: Intervenció bàsica en assistències tècniques",
-                    "Tema 17: Comunicacions per ràdio",
-                    "Tema 18: Vehicles d'intervenció en emergències",
-                    "Tema 19: Conducció i mecànica",
-                    "Tema 20: Equips de protecció individual en emergències",
-                    "Tema 21: Introducció a la gestió d'emergències i Protecció Civil",
-                    "Tema 22: Principis i característiques del Sistema de Comandament",
-                    "Tema 23: Prevenció bàsica d'incendis",
-                    "Tema 24: Intervenció bàsica en incendis estructurals",
-                    "Tema 25: Intervenció bàsica en incendis forestals",
-                    "Tema 26: Prevenció incendis diversos",
-                    "Tema 27: Intervenció bàsica en riscs NRBQ",
-                    "Tema 28: Assistència sanitària",
-                    "Tema 29: Intervenció bàsica en incidents de múltiples víctimes",
-                    "Tema 30: Intervenció bàsica en estructures col·lapse",
-                    "Tema 31: Intervenció bàsica al medi natural terrestre",
-                    "Tema 32: Intervenció bàsica en accidents de mobilitat viària",
-                    "Tema 33: Intervenció bàsica en rescat urbà",
-                    "Tema 34: Intervenció bàsica en inundacions"
+                    "Tema 08: Teoria del Foc", "Tema 09: Física", "Tema 10: Química", "Tema 11: Electricitat", "Tema 12: Instal·lacions",
+                    "Tema 13: Hidràulica i Bombes", "Tema 14: Cartografia i Orientació", "Tema 15: Construcció", "Tema 16: Intervenció bàsica en assistències tècniques",
+                    "Tema 17: Comunicacions per ràdio", "Tema 18: Vehicles d'intervenció en emergències", "Tema 19: Conducció i mecànica", "Tema 20: Equips de protecció individual en emergències",
+                    "Tema 21: Introducció a la gestió d'emergències i Protecció Civil", "Tema 22: Principis i característiques del Sistema de Comandament", "Tema 23: Prevenció bàsica d'incendis",
+                    "Tema 24: Intervenció bàsica en incendis estructurals", "Tema 25: Intervenció bàsica en incendis forestals", "Tema 26: Prevenció incendis diversos", "Tema 27: Intervenció bàsica en riscs NRBQ",
+                    "Tema 28: Assistència sanitària", "Tema 29: Intervenció bàsica en incidents de múltiples víctimes", "Tema 30: Intervenció bàsica en estructures col·lapse", "Tema 31: Intervenció bàsica al medi natural terrestre",
+                    "Tema 32: Intervenció bàsica en accidents de mobilitat viària", "Tema 33: Intervenció bàsica en rescat urbà", "Tema 34: Intervenció bàsica en inundacions"
                 ]
 
                 prompt = (
@@ -1073,7 +1053,6 @@ elif "Plan de Estudio" in str(opcion) or "Pla d'Estudi" in str(opcion) or "6" in
     if "plan_estudio_json" in st.session_state and st.session_state.plan_estudio_json:
         st.markdown("---")
         st.subheader("📋 El teu Pla d'Estudi Interactiu")
-        st.write("Marca les tasques a mesura que les vages completant per portar un seguiment del teu progrés:")
         if "progreso_estudio" not in st.session_state:
             st.session_state.progreso_estudio = {}
 
@@ -1101,20 +1080,21 @@ elif "Plan de Estudio" in str(opcion) or "Pla d'Estudi" in str(opcion) or "6" in
         st.markdown("---")
         st.markdown(st.session_state.plan_estudio_texto_raw)
 
+
 # ------------------------------------------------------------------------------
 # 7. FLASHCARDS
 # ------------------------------------------------------------------------------
-elif "Flashcards" in str(opcion) or "7" in str(opcion):
+elif "7." in opcion_str or "Flashcards" in opcion_str or "Targetes" in opcion_str:
     st.header("🎴 Targetes de Memorització")
     docs = list(st.session_state.textos_pdfs_temario.keys())
     t1, t2 = st.tabs(["➕ Generar Flashcards", "🎴 Veure Flashcards Guardades"])
     with t1:
         if not docs: 
-            st.warning("Puja PDFs primer.")
+            st.warning("Puja PDFs primer a la biblioteca.")
         else:
             ts = st.selectbox("Tema base:", docs)
             nf = st.slider("Nombre de flashcards:", 3, 15, 8)
-            if st.button("Generar"):
+            if st.button("Generar Flashcards"):
                 resp = generar_con_reintento(f"Genera {nf} flashcards (anvers i revers concisos) basades en: {st.session_state.textos_pdfs_temario[ts][:10000]}. Torna un JSON pur en format de llista de diccionaris amb claus 'anverso' i 'reverso'. RESPON EN CATALÀ.")
                 if resp:
                     try:
@@ -1130,20 +1110,21 @@ elif "Flashcards" in str(opcion) or "7" in str(opcion):
                         st.error(f"Error processant JSON: {e}")
     with t2:
         if not st.session_state.flashcards: 
-            st.info("No hi ha flashcards.")
+            st.info("No hi ha flashcards guardades.")
         else:
             for fc in st.session_state.flashcards:
                 with st.expander(f"[{fc.get('tema')}] {fc.get('anverso')}"):
                     st.write(fc.get('reverso'))
 
+
 # ------------------------------------------------------------------------------
 # 8. ESQUEMES I TAULES TÈCNIQUES
 # ------------------------------------------------------------------------------
-elif "Esquemas" in str(opcion) or "Esquemes" in str(opcion) or "8" in str(opcion):
+elif "8." in opcion_str or "Esquemas" in opcion_str or "Esquemes" in opcion_str:
     st.header("📄 Generador de Material Sintètic")
     docs = list(st.session_state.textos_pdfs_temario.keys())
     if not docs: 
-        st.warning("Puja PDFs.")
+        st.warning("Puja PDFs primer a la biblioteca.")
     else:
         ts = st.selectbox("Tema:", docs)
         tipo = st.selectbox("Format:", ["Maquetat Mnemotècnic", "Taula Comparativa", "Resum Executiu"])
@@ -1152,10 +1133,11 @@ elif "Esquemas" in str(opcion) or "Esquemes" in str(opcion) or "8" in str(opcion
             if resp: 
                 st.markdown(resp.text)
 
+
 # ------------------------------------------------------------------------------
 # 9. EXÀMENS OFICIALS
 # ------------------------------------------------------------------------------
-elif "Exámenes" in str(opcion) or "Exàmens" in str(opcion) or "9" in str(opcion):
+elif "9." in opcion_str or "Exámenes" in opcion_str or "Exàmens" in opcion_str:
     st.header("🏛️ Simulador Exàmens Oficials (Núvol)")
     oficiales = st.file_uploader("Puja exàmens oficials anteriors:", type=["pdf"], accept_multiple_files=True, key="up_oficiales")
     if oficiales and supabase:
@@ -1230,10 +1212,11 @@ elif "Exámenes" in str(opcion) or "Exàmens" in str(opcion) or "9" in str(opcio
     else:
         st.info("Puja almenys un PDF d'examen oficial a dalt.")
 
+
 # ------------------------------------------------------------------------------
 # 10. ESTADÍSTIQUES I PROGRESSOS
 # ------------------------------------------------------------------------------
-elif "Estadísticas" in str(opcion) or "Estadístiques" in str(opcion) or "10" in str(opcion):
+elif "10." in opcion_str or "Estadísticas" in opcion_str or "Estadístiques" in opcion_str:
     st.header("📊 Panell d'Estadístiques")
     t1, t2 = st.tabs(["📝 Simulacres", "🎯 Test per Temes"])
     with t1:
@@ -1253,10 +1236,11 @@ elif "Estadísticas" in str(opcion) or "Estadístiques" in str(opcion) or "10" i
         else: 
             st.info("Sense registres de test per temes.")
 
+
 # ------------------------------------------------------------------------------
 # 11. TUTOR IA 24/7
 # ------------------------------------------------------------------------------
-elif "Tutoría" in str(opcion) or "Tutor" in str(opcion) or "11" in str(opcion):
+elif "11." in opcion_str or "Tutoría" in opcion_str or "Tutor" in opcion_str:
     st.header("💬 Tutor IA 24/7")
     st.write("Resol dubtes al moment sobre qualsevol tema del temari de Bombers de la Generalitat.")
     
@@ -1266,7 +1250,6 @@ elif "Tutoría" in str(opcion) or "Tutor" in str(opcion) or "11" in str(opcion):
     if "mensajes_tutor" not in st.session_state:
         st.session_state.mensajes_tutor = []
 
-    # Mostrar l'historial de xat
     for msg in st.session_state.mensajes_tutor:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
