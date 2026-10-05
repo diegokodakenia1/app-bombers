@@ -18,9 +18,6 @@ st.set_page_config(
     page_icon="🚒",
     layout="wide"
 )
-
-# DIAGNÓSTICO TEMPORAL: Esto te mostrará exactamente qué valor lee Streamlit del menú
-st.sidebar.write("Valor seleccionado:", repr(opcion))
 # ==============================================================================
 # CONFIGURACIÓN DE SUPABASE Y RUTINAS POR DEFECTO
 # ==============================================================================
