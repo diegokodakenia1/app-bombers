@@ -735,9 +735,9 @@ elif opcion == "💡 Preguntes de Repàs":
         if "repaso_aleatorio" in st.session_state:
             renderizar_test_interactivo(st.session_state.repaso_aleatorio, "repaso_rand", nombre_tema="Repàs Aleatori")
 # ------------------------------------------------------------------------------
-# 5. PREPARACIÓN FÍSICA (ESTILO HEVY INTEGRAT)
+# 5. PREPARACIÓ FÍSICA (ESTIL HEVY INTEGRAT)
 # ------------------------------------------------------------------------------
-elif opcion == "🏋️‍♂️ Preparación Física":
+elif "Preparación Física" in opcion or "Preparació Física" in opcion:
     st.header("🏋️‍♂️ Preparación Física & Progreso")
     
     # Assegurar variables per evitar fallades en blanc
