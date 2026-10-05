@@ -1145,7 +1145,7 @@ elif "10." in opcion_str or "Estadísticas" in opcion_str or "Estadístiques" in
 
 
 # ------------------------------------------------------------------------------
-# 11. TUTOR IA 24/7 (Amb opció de xat per veu i transcripció automàtica)
+# 11. TUTOR IA 24/7 (Amb opció de xat per veu corregida)
 # ------------------------------------------------------------------------------
 elif opcion == "💬 Tutor IA 24/7":
     st.header("💬 Tutor IA 24/7")
@@ -1157,44 +1157,48 @@ elif opcion == "💬 Tutor IA 24/7":
     if "mensajes_tutor" not in st.session_state:
         st.session_state.mensajes_tutor = []
 
-    # Mostrar l'historial de xat
     for msg in st.session_state.mensajes_tutor:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    # Entrada de text tradicional
     pregunta_usuario = st.chat_input("Escriu el teu dubte sobre l'oposició...")
 
-    # Widget de gravació de veu integrat al xat
     st.markdown("---")
     st.markdown("🎙️ **O pots parlar directament amb el tutor:**")
     audio_file = st.audio_input("Fes clic al micròfon per gravar la teva consulta:")
 
-    # Si l'usuari grava un àudio nou
     if audio_file is not None and audio_file != st.session_state.get("ultimo_audio_procesado"):
-        with st.spinner("Transcribint i analitzant la teva veu..."):
+        with st.spinner("Pujant i processant l'àudio amb la IA..."):
             try:
                 st.session_state["ultimo_audio_procesado"] = audio_file
-                audio_bytes = audio_file.getvalue()
                 
-                # Prompt multimodal: la IA escolta l'àudio, el transcrich i respon
+                # Guardar temporalmente el archivo de audio en disco para subirlo a la API
+                temp_audio_path = "temp_audio_consulta.wav"
+                with open(temp_audio_path, "wb") as f:
+                    f.write(audio_file.getbuffer())
+                
+                # Subir el archivo usando el gestor de archivos de la API de Google GenAI
+                audio_ref = client.files.upload(file=temp_audio_path)
+                
                 prompt_audio = [
-                    {"data": audio_bytes, "mime_type": "audio/wav"},
+                    audio_ref,
                     "Transcriu fidelment el que diu l'alumne en aquest àudio i actua com a tutor expert de Bombers de la Generalitat per respondre-li tècnicament en català."
                 ]
                 
-                resp_audio = generar_con_reintento(prompt_audio)
+                resp_audio = client.models.generate_content(model=MODELO_IA, contents=prompt_audio)
+                
+                # Borrar el archivo temporal local
+                if os.path.exists(temp_audio_path):
+                    os.remove(temp_audio_path)
+                
                 if resp_audio:
                     respuesta_texto = resp_audio.text
-                    
-                    # Afegim a l'historial simulant la intercepció de veu
                     st.session_state.mensajes_tutor.append({"role": "user", "content": "🎤 *(Missatge de veu enviat)*"})
                     st.session_state.mensajes_tutor.append({"role": "assistant", "content": respuesta_texto})
                     st.rerun()
             except Exception as e:
-                st.error(f"Error al processar l'àudio: {e}")
+                st.error(f"Error al processar l'àudio amb l'API: {e}")
 
-    # Processament si s'ha escrit per teclat
     if pregunta_usuario:
         st.session_state.mensajes_tutor.append({"role": "user", "content": pregunta_usuario})
         with st.chat_message("user"):
