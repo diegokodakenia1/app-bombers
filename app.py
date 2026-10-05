@@ -127,118 +127,23 @@ if not api_key:
         api_key = api_key_input
 
 client = genai.Client(api_key=api_key) if api_key else None
-MODELO_IA = "gemini-3.6-flash"
+MODELO_IA = "gemini-2.5-flash"
 
 # Archivos locales de respaldo
 CSV_SIMULACROS = "historial_simulacros.csv"
 CSV_TEST_TEMAS = "historial_test_temas.csv"
 CSV_FALLOS_REPASO = "banco_fallos_repaso.csv"
 CSV_FLASHCARDS = "flashcards_guardadas.csv"
+
 LISTA_EJERCICIOS_HEAVY = [
-    # --- PECHO (CHEST) - BARRAS, MANCUERNAS, POLEAS Y MÁQUINAS ---
     "Press de banca plano con barra", "Press de banca plano con mancuernas",
     "Press de banca inclinado con barra", "Press de banca inclinado con mancuernas",
-    "Press de banca declinado con barra", "Press declinado con mancuernas",
-    "Press en máquina de pecho (Chest Press Machine)", "Press inclinado en máquina",
-    "Press plano en máquina convergente", "Press inclinado en máquina convergente",
-    "Press en máquina Smith (plano)", "Press en máquina Smith (inclinado)", "Press en máquina Smith (declinado)",
-    "Aperturas con mancuernas en banco plano (Chest Fly)", "Aperturas con mancuernas en banco inclinado", "Aperturas con mancuernas en banco declinado",
-    "Contractor de pecho / Pec Deck (Aperturas en máquina)",
-    "Cruce de poleas altas (Cable Crossover de arriba a abajo)", "Cruce de poleas a la altura del pecho (horizontal)", "Cruce de poleas bajas (de abajo a arriba para pecho superior)",
-    "Pullover con mancuerna", "Pullover en polea alta con barra recta o cuerda", "Pullover en máquina específica",
-    "Fondos en paralelas (Dips - enfoque pectoral)", "Flexiones de pecho tradicionales (Push-ups)",
-    "Flexiones declinadas", "Flexiones inclinadas", "Flexiones diamantinas", "Flexiones con manos anchas", "Flexiones lastradas",
-
-    # --- ESPALDA (BACK) - POLEAS, MÁQUINAS Y LIBRES ---
     "Dominadas pronas lastradas", "Dominadas libres (Pull-ups)", "Dominadas supinas (Chin-ups)",
-    "Dominadas neutras", "Dominadas en máquina asistida (pronas, supinas o neutras)",
-    "Jalón al pecho en polea (Lat Pulldown - agarre ancho)", "Jalón al pecho con agarre neutro / estrecho (barra V)", 
-    "Jalón al pecho con agarre supino", "Jalón tras nuca en polea", 
-    "Jalón en polea con brazos rectos (Straight-arm Pulldown con barra o cuerda)",
-    "Remo con barra (Barbell Row - agarre prono y supino)", "Remo con mancuerna a una mano apoyado en banco (Dumbbell Row)",
-    "Remo en polea baja (Seated Cable Row - agarre estrecho, ancho, barra V o cuerda)", 
-    "Remo en máquina T (T-Bar Row con apoyo o libre)", "Remo en máquina convergente sentado", "Remo Pendlay",
-    "Remo horizontal con pecho apoyado (Chest-supported Row en máquina o banco inclinado)",
-    "Remo en máquina Smith", "Remo en puntas de barra (Landmine Row)",
-    "Face Pull en polea alta", "Face Pull con cuerda en polea baja", "Encogimientos de hombros con barra (Barbell Shrugs)", 
-    "Encogimientos con mancuernas", "Encogimientos en máquina Smith", "Encogimientos en máquina específica",
-
-    # --- HOMBROS (SHOULDERS) - MÁQUINAS, POLEAS Y PESO LIBRE ---
-    "Press militar con barra de pie (Standing Overhead Press)", "Press militar sentado con barra",
-    "Press militar con mancuernas sentado", "Press Arnold con mancuernas",
-    "Press en máquina de hombros (Shoulder Press Machine)",
-    "Press en máquina Smith para hombro (frontal o tras nuca)", "Press tras nuca con barra libre",
-    "Elevaciones laterales con mancuernas", "Elevaciones laterales en polea baja (unilateral y bilateral)", 
-    "Elevaciones laterales sentadas con mancuernas", "Elevaciones laterales en máquina específica (Lateral Raise Machine)",
-    "Elevaciones frontales con mancuernas", "Elevaciones frontales con disco o barra", "Elevaciones frontales en polea baja",
-    "Pájaros (Elevaciones posteriores con mancuernas en banco o de pie)", "Pájaros en polea baja (cruce de cables posteriores)", 
-    "Contractor invertido / Pec Deck inverso (para deltoides posterior)", "Pájaros en banco inclinado con mancuernas",
-    "Remo al mentón con barra o polea (Upright Row)",
-
-    # --- BÍCEPS (BICEPS) - BARRAS, MANCUERNAS, POLEAS Y MÁQUINAS ---
-    "Curl de bíceps con barra recta", "Curl con barra Z", "Curl con mancuernas alterno de pie",
-    "Curl con mancuernas tipo martillo (Hammer Curl)", "Curl martillo cruzado con mancuerna", "Curl martillo en polea con cuerda",
-    "Curl en banco Scott / Predicador con barra Z o recta", "Curl predicador con mancuerna o máquina",
-    "Curl en polea baja (con barra recta, barra Z o cuerda)", "Curl concentrado con mancuerna", 
-    "Curl inclinado con mancuernas en banco a 45º", "Curl en polea alta (Estilo doble bíceps / Crossover)", 
-    "Curl Zottman con mancuernas", "Curl de bíceps en máquina sentado", "Curl en polea baja a una mano (unilateral)",
-
-    # --- TRÍCEPS (TRICEPS) - POLEAS, MÁQUINAS Y LIBRES ---
-    "Press francés con barra Z en banco plano (Skull Crushers)", "Press francés con barra Z en banco inclinado o declinado",
-    "Press francés con mancuernas en banco plano o inclinado",
-    "Extensiones de tríceps en polea alta con cuerda", "Extensiones de tríceps en polea alta con barra recta o barra V",
-    "Extensiones de tríceps en polea alta con agarre supino / inverso", 
-    "Extensiones de tríceps a una mano en polea alta (agarre prono, neutro o supino)",
-    "Extensiones de tríceps por encima de la cabeza con mancuerna a dos manos (Cenital sentado o de pie)", 
-    "Extensiones de tríceps por encima de la cabeza con mancuerna a una mano (unilateral)", 
-    "Extensiones de tríceps por encima de la cabeza en polea baja con cuerda (de espaldas a la polea)", 
-    "Extensiones de tríceps por encima de la cabeza en polea baja con barra recta o barra Z", 
-    "Extensiones de tríceps por encima de la cabeza en polea baja a una mano (unilateral)",
-    "Extensiones de tríceps cenitales en banco con barra Z",
-    "Press cerrado en banca plana (Close-grip Bench Press)", "Press cerrado en máquina Smith",
-    "Patada de tríceps con mancuerna", "Patada de tríceps en polea baja (unilateral)",
-    "Fondos en paralelas o máquina asistida (enfoque tríceps)", "Extensiones de tríceps en máquina sentado (Triceps Extension Machine)",
-
-    # --- PIERNAS - CUÁDRICEPS (QUADS) - MÁQUINAS Y LIBRES ---
-    "Sentadilla trasera con barra (Back Squat)", "Sentadilla frontal con barra (Front Squat)",
-    "Sentadilla en máquina Smith", "Sentadilla búlgara con mancuernas o barra", 
-    "Sentadilla Hack en máquina", "Sentadilla Pendulum en máquina", "Sentadilla en máquina V-Squat",
-    "Prensa de piernas inclinada 45º", "Prensa horizontal", "Prensa vertical",
-    "Extensiones de cuádriceps en máquina (Leg Extension - bilateral y unilateral)", 
-    "Zancadas con mancuernas (Lunges / Paseo de arrancada)", "Zancadas en máquina Smith o zancadas estáticas", 
-    "Sentadilla Goblet con mancuerna o kettlebell", "Sentadilla Sissy", "Pistol squats (sentadillas a una pierna)",
-
-    # --- PIERNAS - ISQUIOS Y GLÚTEOS (HAMSTRINGS & GLUTES) ---
-    "Peso muerto convencional con barra", "Peso muerto rumano (Romanian Deadlift con barra o mancuernas)", 
-    "Peso muerto sumo con barra", "Peso muerto en máquina Smith", "Peso muerto rumano a una pierna con mancuerna",
-    "Curl de isquios tumbado en máquina (Seated / Lying Leg Curl acostado)", "Curl de isquios sentado en máquina", 
-    "Curl de isquios femoral de pie en máquina", "Curl de isquios unilateral en polea baja",
-    "Hip thrust con barra", "Hip thrust en máquina específica", "Puente de glúteos en suelo con barra o disco",
-    "Patada de glúteo en polea baja", "Patada de glúteo en máquina específica",
-    "Buenos días (Good Mornings con barra)", "Máquina de abductores (para glúteo medio)", "Máquina de aductores (aproximadores)",
-    "Pull-through en polea baja", "Hiperextensiones de cadera en banco a 45º (enfoque glúteo/isquios)",
-
-    # --- GEMELOS Y ANTEBRAZOS (CALVES & FOREARMS) ---
-    "Elevación de talones de pie en máquina (Standing Calf Raise)", "Elevación de talones sentado en máquina (Seated Calf Raise)", 
-    "Elevación de talones en prensa de 45º", "Elevación de talones en máquina Smith", "Elevación de talones a una pierna con mancuerna",
-    "Curl de muñeca con barra en banqueta (antebrazos)", "Curl de muñeca inverso con barra", "Paseo del granjero (Farmer's Walk con mancuernas o barras)",
-    "Curl de antebrazos en pronación con barra (Wrist Roller)",
-
-    # --- ABDOMEN Y CORE (CORE) ---
-    "Plancha abdominal isométrica", "Plancha lateral isométrica", "Abdominales crunch tradicionales en suelo",
-    "Elevación de piernas colgado en barra (Hanging Leg Raises)", "Elevación de rodillas colgado en barra", "Elevación de rodillas en silla romana",
-    "Abdominales en máquina de crunch (Ab Machine)", "Rueda abdominal (Ab Wheel Rollout)", 
-    "Russian twists con disco o mancuerna", "Pallof press en polea", 
-    "Crunches en polea alta (Abdominales en polea de rodillas con cuerda)",
-    "Elevaciones de tronco en banco romano / Hiperextensiones (Back Extensions)", "Giros rusos o twists en polea baja",
-
-    # --- FUNCIONALES, POTENCIA Y OPOSICIÓN BOMBERO ---
-    "Salto vertical con contramovimiento", "Cargadas de potencia (Power Clean)",
-    "Arrancadas (Snatch)", "Clean and Jerk", "Thrusters con barra o mancuernas",
-    "Kettlebell Swing (Oscilación con pesa rusa)", "Carga y transporte de saco de arena (Sandbag Carry)",
-    "Lanzamiento de balón medicinal (Ball Slam)", "Subida de cuerda sin ayuda de piernas (Oposiciones Bombero)",
-    "Simulación de Course Navette / Test de resistencia", "Burpees", "Saltos al cajón (Box Jumps)",
-    "Battle Ropes (Cuerdas de batalla)", "Sled Push / Sled Pull (Arrastre y empuje de trineo de fuerza)"
+    "Press militar con barra de pie (Standing Overhead Press)", "Elevaciones laterales con mancuernas",
+    "Curl de bíceps con barra recta", "Press francés con barra Z en banco plano (Skull Crushers)",
+    "Sentadilla trasera con barra (Back Squat)", "Prensa de piernas inclinada 45º",
+    "Peso muerto convencional con barra", "Peso muerto rumano (Romanian Deadlift con barra o mancuernas)",
+    "Elevación de talones de pie en máquina (Standing Calf Raise)", "Plancha abdominal isométrica"
 ]
 
 def generar_con_reintento(prompt_texto, intentos=6, espera=5):
@@ -254,7 +159,6 @@ def generar_con_reintento(prompt_texto, intentos=6, espera=5):
             if ("503" in str_e or "UNAVAILABLE" in str_e or "RESOURCE_EXHAUSTED" in str_e) and intento < intentos - 1:
                 time.sleep(espera)
                 continue
-            
             st.error(f"Detall exacte de l'error de Google: {e}")
             return None
     return None
@@ -288,7 +192,7 @@ def guardar_rutinas_nube():
                     file=json_bytes,
                     file_options={"content-type": "application/json"}
                 )
-            except Exception as e:
+            except Exception:
                 pass
 
 def inicializar_estados():
@@ -500,25 +404,27 @@ def renderizar_test_interactivo(texto_ia, clave_sesion, nombre_tema="General"):
         st.success(f"🎉 Desat! Nota: {nota_calc}/10")
 
 # ------------------------------------------------------------------------------
-# PANEL DE NAVEGACIÓN LATERAL
+# PANEL DE NAVEGACIÓN LATERAL Y DEFINICIÓN DE OPCIÓN
 # ------------------------------------------------------------------------------
 st.sidebar.title("🚒 Panell de Navegació")
 opcion = st.sidebar.radio(
     "Selecciona un mòdul:",
     [
-        "📚 Biblioteca del Temari",
-        "📝 Simulacre d'Examen",
-        "🎯 Test per Temes",
-        "💡 Preguntes de Repàs",
-        "🏋️‍♂️ Preparació Física",
-        "📅 Pla d'Estudi Personalitzat",
-        "🎴 Flashcards de Memorització",
-        "📄 Esquemes i Taules Tècniques",
-        "🏛️ Preguntes Exàmens Oficials",
-        "📊 Estadístiques i Progressos",
-        "💬 Tutor IA 24/7"
+        "1. Biblioteca Temari",
+        "2. Simulacre d'Examen",
+        "3. Test per Temes",
+        "4. Preguntes de Repàs",
+        "5. Preparació Física",
+        "6. Pla d'Estudi",
+        "7. Flashcards",
+        "8. Esquemes i Taules",
+        "9. Exàmens Oficials",
+        "10. Estadístiques",
+        "11. Tutor IA 24/7"
     ]
 )
+
+opcion_str = str(opcion)
 
 # ------------------------------------------------------------------------------
 # FUNCIÓN AUXILIAR PARA LIMPIAR NOMBRES DE ARCHIVOS
