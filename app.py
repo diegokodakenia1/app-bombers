@@ -913,45 +913,123 @@ elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
         )
 
     if st.button("🚀 Generar Pla Estratègic"):
-        if client is not None:
-            if not dias_estudio:
-                st.warning("Selecciona al menys un dia d'estudi a la setmana.")
-            else:
-                temario_oficial = [
-                    "Tema 01: Constitució i Estatut", "Tema 02: Funció Pública", "Tema 03: Prevenció Riscos Laborals",
-                    "Tema 04: Igualtat i no discriminació", "Tema 05: Igualtat efectiva", "Tema 06: Incendis i Protecció Civil",
-                    "Tema 07: Estructura Departament Interior", "Tema 08: Teoria del Foc", "Tema 09: Física", "Tema 10: Química",
-                    "Tema 11: Electricitat", "Tema 12: Instal·lacions", "Tema 13: Hidràulica i Bombes", "Tema 14: Cartografia",
-                    "Tema 15: Construcció", "Tema 16: Assistències tècniques", "Tema 17: Comunicacions", "Tema 18: Vehicles",
-                    "Tema 19: Conducció i mecànica", "Tema 20: EPIs", "Tema 21: Gestió d'emergències", "Tema 22: Comandament",
-                    "Tema 23: Prevenció incendis", "Tema 24: Incendis estructurals", "Tema 25: Incendis forestals", "Tema 26: Incendis diversos",
-                    "Tema 27: Riscs NRBQ", "Tema 28: Assistència sanitària", "Tema 29: Múltiples víctimes", "Tema 30: Estructures col·lapse",
-                    "Tema 31: Medi natural", "Tema 32: Accidents viaris", "Tema 33: Rescat urbà", "Tema 34: Inundacions"
-                ]
+        if not dias_estudio:
+            st.warning("Selecciona al menys un dia d'estudi a la setmana.")
+        else:
+            # Generació local exacta basada en el pla, desplaçada per començar en dijous
+            pla_local = [
+                {
+                    "semana": "1: Domini del bloc de marc constitucional",
+                    "objetivo": "Inici del pla d'estudi estratègic adaptat a dijous.",
+                    "dias": [
+                        {"dia": "Dijous (Avui)", "tareas": ["Tema 01: Constitución Española, Estatut d'Autonomia, Administración catalana e instituciones - 3 horas de lectura y subrayado + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 01: Constitución Española, Estatut d'Autonomia, Administración catalana e instituciones - 3 horas de profundización y esquemas + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "2: Legislació de igualtat i normativa específica",
+                    "objetivo": "Continuació del bloc normatiu.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario - 3 horas de lectura y subrayado + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario - 3 horas de estudio de régimen disciplinario + 1 hora de test"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 03: Ley 31/1995 de Prevención de Riesgos Laborales, EPIs y normativa de despliegue - 3 horas de estudio y esquemas + 1 hora de test"]},
+                        {"dia": "Dijous", "tareas": ["Tema 04: Ley 19/2020 d'igualtat de tracte i no discriminació - 3 horas de lectura y subrayado + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 05: Ley 17/2015 d'igualtat efectiva de mujeres y hombres (Cap. 1, 3 y 4) - 3 horas de lectura y esquemas + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "3: Ciències bàsiques aplicades: Fuego, Física y Química",
+                    "objetivo": "Física i química aplicada al foc.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil - 3 horas de lectura y estudio + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil - 3 horas de esquemas y consolidación + 1 hora de test"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 07: Decreto 276/2016 de funciones de guardia y sistema de mando, y Decreto 12/2023 de reestructuración del departamento de Interior - 3 horas de estudio detallado + 1 hora de test"]},
+                        {"dia": "Dijous", "tareas": ["Tema 08: Teoría del Fuego - 3 horas de lectura y esquemas + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 09: Física - 3 horas de lectura y conceptos fundamentales + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "4: Electricidad, Instalaciones, hidráulica y orientación",
+                    "objetivo": "Hidràulica, instal·lacions i orientació.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 09: Física - 3 horas de resolución de problemas + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 10: Química - 3 horas de lectura y formulación básica + 1 hora de test"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 10: Química - 3 horas de estudio de reacciones y productos peligrosos + 1 hora de test"]},
+                        {"dia": "Dijous", "tareas": ["Tema 11: Electricidad - 3 horas de lectura y esquemas + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 12: Instalaciones - 3 horas de estudio de edificación y servicios + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "5: Construcción, asistencia técnica, comunicaciones y parque",
+                    "objetivo": "Sistemes de construcció i vehicles.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 13: Hidráulica y Bombas - 3 horas de teoría de fluidos e hidrostática + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 13: Hidráulica y Bombas - 3 horas de hidrodinámica y cálculo de bombas + 1 hora de test"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 14: Cartografía y Orientación - 3 horas de estudio de mapas y escalas + 1 hora de test"]},
+                        {"dia": "Dijous", "tareas": ["Tema 15: Construcción - 3 horas de lectura y análisis de elementos estructurales + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 16: Intervención básica en asistencias técnicas - 3 horas de estudio de procedimientos + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "6: Protección individual, gestión operativa e intervención",
+                    "objetivo": "EPIs i operativitat contra incendis.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 17: Comunicaciones por radio - 3 horas de estudio de protocolos y redes + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 18: Vehículos de intervención en emergencias - 3 horas de lectura y tipologías + 1 hora de test"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 19: Conducción y mecánica - 3 horas de estudio de mecánica y conducción de emergencia + 1 hora de test"]},
+                        {"dia": "Dijous", "tareas": ["Tema 20: Equipos de protección individual en emergencias - 3 horas de estudio de EPIs y ERA + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 21: Introducción a la gestión de emergencias y Protección Civil - 3 horas de lectura y esquemas + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "7: Incendios forestales, riesgos especiales y NRBQ",
+                    "objetivo": "Incendis forestals i riscos específics.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 22: Principios y características del Sistema de Mando - 3 horas de análisis del sistema + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 23: Prevención básica de incendios - 3 horas de lectura y normativa + 1 hora de test"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 24: Intervención básica en incendios estructurales - 3 horas de estudio táctico y desarrollo + 1 hora de test"]},
+                        {"dia": "Dijous", "tareas": ["Tema 24: Intervención básica en incendis estructurals - 3 horas de profundización e hidráulica de incendios + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 25: Intervención básica en incendios forestales - 3 horas de estudio de comportamiento y extinción + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "8: Atención sanitaria, múltiples víctimas y salvamento",
+                    "objetivo": "Sanitària i rescats.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 26: Prevención incendios varios - 3 horas de lectura y esquemas + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 horas de zonificación e identificación de sustancias + 1 hora de test"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 horas de descontaminación y protocolos + 1 hora de test"]},
+                        {"dia": "Dijous", "tareas": ["Tema 28: Asistencia sanitaria - 3 horas de soporte vital básico y anatomía + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 28: Asistencia sanitaria - 3 horas de atención al trauma y patologías urgentes + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "9: Rescate en accidentes de tráfico, entornos urbanos e inundaciones",
+                    "objetivo": "Tancament de la volta amb rescats i inundacions.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 29: Intervención básica en incidentes de múltiples víctimas - 3 horas de estudio de triaje y organización + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 30: Intervención básica en estructuras colapsadas - 3 horas de apuntalamientos y búsqueda + 1 hora de test"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 31: Intervención básica al medi natural terrestre - 3 horas de técnicas de rescate terrestre + 1 hora de test"]},
+                        {"dia": "Dijous", "tareas": ["Tema 32: Intervención básica en accidentes de movilidad viaria - 3 horas de estudio de excarcelación y estabilización + 1 hora de test"]},
+                        {"dia": "Divendres", "tareas": ["Tema 33: Intervención básica en rescate urbano - 3 horas de estudio de rescate en altura y espacios confinados + 1 hora de test"]}
+                    ]
+                },
+                {
+                    "semana": "10: Repàs final i tancament",
+                    "objetivo": "Últims temes i consolidació de la volta.",
+                    "dias": [
+                        {"dia": "Dilluns", "tareas": ["Tema 34: Intervención básica en inundaciones - 3 horas de estudio de dinámicas de riadas y rescate acuático + 1 hora de test"]},
+                        {"dia": "Dimarts", "tareas": ["Tema 28: Asistencia sanitaria - 3 horas de repaso general de algoritmos + 1 hora de test global de sanidad"]},
+                        {"dia": "Dimecres", "tareas": ["Tema 13: Hidráulica y Bombas - 3 horas de repaso de fórmulas y cálculos aplicados + 1 hora de test global de hidráulica"]}
+                    ]
+                }
+            ]
 
-                prompt = (
-                    f"Crea un pla d'estudi per a oposicions de Bombers basat en aquests 34 temes. "
-                    f"Cada dia ha de tenir 4 hores (3h teoria + 1h test). "
-                    f"IMPORTANT: La Setmana 1 comença avui dijous i demà divendres. Després segueix de dilluns a divendres. "
-                    f"Torna el resultat **estrictament en JSON pur** amb una llista d'objectes: setmana, objetivo, dias (dia, tareas). "
-                    f"Tot en català.\n\nTemes:\n" + "\n".join(temario_oficial)
-                )
-
-
-                with st.spinner("Generant pla d'estudi estratègic..."):
-                    resp = generar_con_reintento(prompt)
-                    if resp:
-                        try:
-                            clean_json = resp.text.strip().replace("```json", "").replace("```", "")
-                            st.session_state.plan_estudio_json = json.loads(clean_json)
-                            st.session_state.plan_estudio_texto_raw = ""
-                            st.success("¡Pla d'estudi estratègic generat amb èxit!")
-                            guardar_plan_nube()
-                        except Exception:
-                            st.session_state.plan_estudio_json = None
-                            st.session_state.plan_estudio_texto_raw = resp.text
-                            st.success("¡Pla generat amb èxit!")
-                            guardar_plan_nube()
+            st.session_state.plan_estudio_json = pla_local
+            st.session_state.plan_estudio_texto_raw = ""
+            st.success("¡Pla d'estudi estratègic carregat exactament a mida!")
+            if 'guardar_plan_nube' in globals():
+                guardar_plan_nube()
 
     if "plan_estudio_json" in st.session_state and st.session_state.plan_estudio_json:
         st.markdown("---")
@@ -974,7 +1052,8 @@ elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
 
                         def actualizar_checkbox(k=key_check):
                             st.session_state.progreso_estudio[k] = st.session_state[k]
-                            guardar_plan_nube()
+                            if 'guardar_plan_nube' in globals():
+                                guardar_plan_nube()
 
                         st.checkbox(tarea, key=key_check, on_change=actualizar_checkbox)
                     st.markdown("")
@@ -982,8 +1061,6 @@ elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
     elif "plan_estudio_texto_raw" in st.session_state and st.session_state.plan_estudio_texto_raw:
         st.markdown("---")
         st.markdown(st.session_state.plan_estudio_texto_raw)
-
-
 # ------------------------------------------------------------------------------
 # 7. FLASHCARDS
 # ------------------------------------------------------------------------------
