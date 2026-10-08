@@ -1197,24 +1197,104 @@ elif "9." in opcion_str or "Exámenes" in opcion_str or "Exàmens" in opcion_str
 # 10. ESTADÍSTIQUES I PROGRESSOS
 # ------------------------------------------------------------------------------
 elif "10." in opcion_str or "Estadísticas" in opcion_str or "Estadístiques" in opcion_str:
-    st.header("📊 Panell d'Estadístiques")
-    t1, t2 = st.tabs(["📝 Simulacres", "🎯 Test per Temes"])
+    st.header("📊 Panell d'Estadístiques i Progrés")
+    t1, t2, t3 = st.tabs(["📝 Simulacres", "🎯 Test per Temes", "📚 Temari"])
+    
     with t1:
-        if st.session_state.historico:
+        if "historico" in st.session_state and st.session_state.historico:
             df = pd.DataFrame(st.session_state.historico)
             st.metric("Nota Mitjana Simulacres", f"{df['nota'].mean():.2f}")
             st.dataframe(df, use_container_width=True)
-            st.line_chart(df.set_index("fecha")[["nota"]])
+            if "fecha" in df.columns and "nota" in df.columns:
+                st.line_chart(df.set_index("fecha")[["nota"]])
         else: 
             st.info("Sense registres de simulacres.")
+            
     with t2:
-        if st.session_state.historico_test_temas:
+        if "historico_test_temas" in st.session_state and st.session_state.historico_test_temas:
             df2 = pd.DataFrame(st.session_state.historico_test_temas)
             st.metric("Nota Mitjana Temes", f"{df2['nota'].mean():.2f}")
             st.dataframe(df2, use_container_width=True)
-            st.line_chart(df2.set_index("fecha")[["nota"]])
+            if "fecha" in df2.columns and "nota" in df2.columns:
+                st.line_chart(df2.set_index("fecha")[["nota"]])
         else: 
             st.info("Sense registres de test per temes.")
+            
+    with t3:
+        st.subheader("📈 Estat i Maduració del Temari")
+        
+        # Càlcul del progrés del pla d'estudi basat en els checkboxes
+        progreso = st.session_state.get("progreso_estudio", {})
+        plan = st.session_state.get("plan_estudio_json", [])
+        
+        total_tareas = 0
+        tareas_completadas = 0
+        
+        for sem in plan:
+            for d_info in sem.get('dias', []):
+                dia_nombre = d_info.get('dia', '')
+                for t_idx, _ in enumerate(d_info.get('tareas', [])):
+                    total_tareas += 1
+                    key_check = f"chk_sem_{sem.get('semana')}_{dia_nombre}_{t_idx}"
+                    if progreso.get(key_check, False):
+                        tareas_completadas += 1
+                        
+        if total_tareas > 0:
+            porcentaje_completado = (tareas_completadas / total_tareas) * 100
+            voltas_completas = tareas_completadas // total_tareas
+            tareas_vuelta_actual = tareas_completadas % total_tareas
+            porcentaje_vuelta_actual = (tareas_vuelta_actual / total_tareas) * 100
+        else:
+            porcentaje_completado = 0
+            voltas_completas = 0
+            porcentaje_vuelta_actual = 0
+
+        # Mètriques principals
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            st.metric("Temari Completat (Total)", f"{porcentaje_completado:.1f}%")
+        with col_m2:
+            st.metric("Voltes completes al temari", f"{voltas_completas}")
+        with col_m3:
+            st.metric("Progrés de la volta actual", f"{porcentaje_vuelta_actual:.1f}%")
+            
+        st.progress(min(porcentaje_vuelta_actual / 100.0, 1.0))
+        st.markdown("---")
+        
+        # Relació amb els resultats dels test per temes (Punts febles / forts)
+        st.subheader("🔍 Anàlisi de Punts Febles (Test per Temes)")
+        historico_tests = st.session_state.get("historico_test_temas", [])
+        
+        if historico_tests:
+            df_tests = pd.DataFrame(historico_tests)
+            # Suposem que el registre guarda el tema a una columna anomenada 'tema' o 'nombre_tema' o similar
+            # Busquem quina columna pot contenir el tema
+            col_tema_candidatas = [c for c in df_tests.columns if 'tema' in c.lower()]
+            col_nota_candidatas = [c for c in df_tests.columns if 'nota' in c.lower() or 'puntuacion' in c.lower()]
+            
+            if col_tema_candidatas and col_nota_candidatas:
+                c_tema = col_tema_candidatas[0]
+                c_nota = col_nota_candidatas[0]
+                
+                # Agrupem per tema per calcular la mitjana de cadascun
+                df_resumen = df_tests.groupby(c_tema)[c_nota].mean().reset_index()
+                df_resumen = df_resumen.sort_values(by=c_nota, ascending=True) # Del pitjor al millor
+                
+                col_f1, col_f2 = st.columns(2)
+                with col_f1:
+                    st.markdown("⚠️ **Temes que portes pitjor (Menor nota mitjana):**")
+                    peores = df_resumen.head(5)
+                    for _, row in peores.iterrows():
+                        st.write(f"- **{row[c_tema]}**: {row[c_nota]:.2f}")
+                with col_f2:
+                    st.markdown("🏆 **Temes que domines millor (Major nota mitjana):**")
+                    mejores = df_resumen.tail(5).sort_values(by=c_nota, ascending=False)
+                    for _, row in mejores.iterrows():
+                        st.write(f"- **{row[c_tema]}**: {row[c_nota]:.2f}")
+            else:
+                st.info("No s'han trobat columnes de 'tema' o 'nota' identificables a l'historial de testos per temes per fer l'anàlisi detallat.")
+        else:
+            st.info("Encara no hi ha suficients registres a 'Test per Temes' per calcular els teus punts febles. Fes algun test per veure l'anàlisi aquí!")
 
 
 # ------------------------------------------------------------------------------
