@@ -935,15 +935,16 @@ elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
                 ]
 
                 # Obtenim el dia d'avui en català (avui és dijous)
-                prompt = (
+                 prompt = (
                     f"Actua com un planificador expert i directe per a oposicions de Bombers de la Generalitat. "
                     f"Crea un pla d'estudi teòric estructurat per donar una volta completa a TOT el temari oficial llistat avall. "
                     f"Disposes de {hs} hores setmanals distribuïdes en els dies: {', '.join(dias_estudio)}. "
-                    f"IMPORTANT: Avui és Dijous. Comença la planificació d'estudi de la Setmana 1 directament des d'avui (Dijous) i continua amb la resta de dies seleccionats. "
                     f"Torna el resultat estrictament en format JSON pur amb una llista d'objectes per setmana que continguen 'semana', 'objetivo' i 'dias' (amb 'dia' i 'tareas'). "
                     f" RESPON EN CATALÀ.\n\n"
                     f"Llistat oficial:\n" + "\n".join(temario_oficial)
-                )
+                ) 
+
+
                 with st.spinner("Generant pla d'estudi estratègic..."):
                     resp = generar_con_reintento(prompt)
                     if resp:
