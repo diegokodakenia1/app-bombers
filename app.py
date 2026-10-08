@@ -935,13 +935,13 @@ elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
                 ]
 
                 prompt = (
-                    f"Actua com un planificador expert i directe per a oposicions de Bombers de la Generalitat. "
-                    f"Crea un pla d'estudi teòric estructurat per donar una volta completa a TOT el temari oficial llistat avall. "
-                    f"Disposes de {hs} hores setmanals distribuïdes en els dies habituals: {', '.join(dias_estudio)} (a raó de 4 hores diàries). "
-                    f"IMPORTANTÍSSIM PER AL CALENDARI: Avui és dijous. La Setmana 1 ha de començar **estrictament avui dijous** assignant les primeres tasques del temari a dijous i divendres d'aquesta setmana. A partir de la Setmana 2, continua la seqüència exacta dia a dia de manera consecutiva seguint el patró normal de dilluns a divendres. Cap tema s'ha de saltar ni comprimir; simplement desplaça tota la cadena de tasques endavant començant des d'avui mateix (fent que el final del pla s'allargui 3 dies més). "
+                    f"Actua com un planificador expert per a oposicions de Bombers de la Generalitat. "
+                    f"Crea un pla d'estudi teòric basat ÚNICAMENT en els títols dels temes llistats avall. "
+                    f"Estructura les sessions a raó de {hs} hores diàries (per exemple: 3 hores de lectura/subratllat i 1 hora de test). "
+                    f"IMPORTANTÍSSIM: Comença la Setmana 1 estrictament **avui dijous** i demà divendres assignant les primeres tasques. A partir de la Setmana 2, continua la seqüència consecutiva de dilluns a divendres. "
                     f"Torna el resultat estrictament en format JSON pur amb una llista d'objectes per setmana que continguen 'semana', 'objetivo' i 'dias' (amb 'dia' i 'tareas'). "
                     f" RESPON EN CATALÀ.\n\n"
-                    f"Llistat oficial:\n" + "\n".join(temario_oficial)
+                    f"Llistat de temes:\n" + "\n".join(temario_oficial)
                 )
 
 
