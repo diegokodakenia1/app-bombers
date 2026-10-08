@@ -934,10 +934,12 @@ elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
                     "Tema 32: Intervenció bàsica en accidents de mobilitat viària", "Tema 33: Intervenció bàsica en rescat urbà", "Tema 34: Intervenció bàsica en inundacions"
                 ]
 
+                # Obtenim el dia d'avui en català (avui és dijous)
                 prompt = (
                     f"Actua com un planificador expert i directe per a oposicions de Bombers de la Generalitat. "
                     f"Crea un pla d'estudi teòric estructurat per donar una volta completa a TOT el temari oficial llistat avall. "
                     f"Disposes de {hs} hores setmanals distribuïdes en els dies: {', '.join(dias_estudio)}. "
+                    f"IMPORTANT: Avui és Dijous. Comença la planificació d'estudi de la Setmana 1 directament des d'avui (Dijous) i continua amb la resta de dies seleccionats. "
                     f"Torna el resultat estrictament en format JSON pur amb una llista d'objectes per setmana que continguen 'semana', 'objetivo' i 'dias' (amb 'dia' i 'tareas'). "
                     f" RESPON EN CATALÀ.\n\n"
                     f"Llistat oficial:\n" + "\n".join(temario_oficial)
