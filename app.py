@@ -1221,7 +1221,7 @@ elif "10." in opcion_str or "Estadísticas" in opcion_str or "Estadístiques" in
             st.info("Sense registres de test per temes.")
             
     with t3:
-        st.subheader("📈 Estat i Maduració del Temari")
+        st.subheader("📈 Estat i Maduració Global del Temari")
         
         # Càlcul del progrés del pla d'estudi basat en els checkboxes
         progreso = st.session_state.get("progreso_estudio", {})
@@ -1254,47 +1254,89 @@ elif "10." in opcion_str or "Estadísticas" in opcion_str or "Estadístiques" in
         with col_m1:
             st.metric("Temari Completat (Total)", f"{porcentaje_completado:.1f}%")
         with col_m2:
-            st.metric("Voltes completes al temari", f"{voltas_completas}")
+            st.metric("Voltes completes", f"{voltas_completas}")
         with col_m3:
-            st.metric("Progrés de la volta actual", f"{porcentaje_vuelta_actual:.1f}%")
+            st.metric("Progrés volta actual", f"{porcentaje_vuelta_actual:.1f}%")
             
         st.progress(min(porcentaje_vuelta_actual / 100.0, 1.0))
         st.markdown("---")
         
-        # Relació amb els resultats dels test per temes (Punts febles / forts)
-        st.subheader("🔍 Anàlisi de Punts Febles (Test per Temes)")
+        # Anàlisi de Punts Febles i Forts Generals
+        st.subheader("🔍 Anàlisi Global de Test per Temes")
         historico_tests = st.session_state.get("historico_test_temas", [])
         
-        if historico_tests:
-            df_tests = pd.DataFrame(historico_tests)
-            # Suposem que el registre guarda el tema a una columna anomenada 'tema' o 'nombre_tema' o similar
-            # Busquem quina columna pot contenir el tema
-            col_tema_candidatas = [c for c in df_tests.columns if 'tema' in c.lower()]
-            col_nota_candidatas = [c for c in df_tests.columns if 'nota' in c.lower() or 'puntuacion' in c.lower()]
+        df_tests = pd.DataFrame(historico_tests) if historico_tests else pd.DataFrame()
+        col_tema_candidatas = [c for c in df_tests.columns if 'tema' in c.lower()] if not df_tests.empty else []
+        col_nota_candidatas = [c for c in df_tests.columns if 'nota' in c.lower() or 'puntuacion' in c.lower()] if not df_tests.empty else []
+        
+        if not df_tests.empty and col_tema_candidatas and col_nota_candidatas:
+            c_tema = col_tema_candidatas[0]
+            c_nota = col_nota_candidatas[0]
             
-            if col_tema_candidatas and col_nota_candidatas:
-                c_tema = col_tema_candidatas[0]
-                c_nota = col_nota_candidatas[0]
+            df_resumen = df_tests.groupby(c_tema).agg(
+                nota_mitjana=(c_nota, 'mean'),
+                tests_fets=(c_nota, 'count')
+            ).reset_index()
+            
+            df_resumen_sorted = df_resumen.sort_values(by='nota_mitjana', ascending=True)
+            
+            col_f1, col_f2 = st.columns(2)
+            with col_f1:
+                st.markdown("⚠️ **Temes amb pitjor nota mitjana:**")
+                for _, row in df_resumen_sorted.head(5).iterrows():
+                    st.write(f"- **{row[c_tema]}**: {row['nota_mitjana']:.2f} ({row['tests_fets']} testos)")
+            with col_f2:
+                st.markdown("🏆 **Temes amb millor nota mitjana:**")
+                for _, row in df_resumen_sorted.tail(5).sort_values(by='nota_mitjana', ascending=False).iterrows():
+                    st.write(f"- **{row[c_tema]}**: {row['nota_mitjana']:.2f} ({row['tests_fets']} testos)")
+            
+            st.markdown("---")
+            st.subheader("📋 Desglossament Detallat per Tema")
+            
+            # Construim una llista de temes únics detectats o definits al temari oficial
+            temario_oficial_nombres = [
+                "Tema 01", "Tema 02", "Tema 03", "Tema 04", "Tema 05", "Tema 06", "Tema 07", 
+                "Tema 08", "Tema 09", "Tema 10", "Tema 11", "Tema 12", "Tema 13", "Tema 14", 
+                "Tema 15", "Tema 16", "Tema 17", "Tema 18", "Tema 19", "Tema 20", "Tema 21", 
+                "Tema 22", "Tema 23", "Tema 24", "Tema 25", "Tema 26", "Tema 27", "Tema 28", 
+                "Tema 29", "Tema 30", "Tema 31", "Tema 32", "Tema 33", "Tema 34"
+            ]
+            
+            # Creem una taula de detall creuant dades del pla i dels testos
+            detalle_temas = []
+            for t_nom in temario_oficial_nombres:
+                # Busquem quantes tasques d'aquest tema s'han completat al pla
+                t_total_tema = 0
+                t_completades_tema = 0
+                for sem in plan:
+                    for d_info in sem.get('dias', []):
+                        dia_nombre = d_info.get('dia', '')
+                        for t_idx, tarea_txt in enumerate(d_info.get('tareas', [])):
+                            if t_nom.lower() in tarea_txt.lower():
+                                t_total_tema += 1
+                                key_check = f"chk_sem_{sem.get('semana')}_{dia_nombre}_{t_idx}"
+                                if progreso.get(key_check, False):
+                                    t_completades_tema += 1
                 
-                # Agrupem per tema per calcular la mitjana de cadascun
-                df_resumen = df_tests.groupby(c_tema)[c_nota].mean().reset_index()
-                df_resumen = df_resumen.sort_values(by=c_nota, ascending=True) # Del pitjor al millor
+                pct_estudi = (t_completades_tema / t_total_tema * 100) if t_total_tema > 0 else 0.0
                 
-                col_f1, col_f2 = st.columns(2)
-                with col_f1:
-                    st.markdown("⚠️ **Temes que portes pitjor (Menor nota mitjana):**")
-                    peores = df_resumen.head(5)
-                    for _, row in peores.iterrows():
-                        st.write(f"- **{row[c_tema]}**: {row[c_nota]:.2f}")
-                with col_f2:
-                    st.markdown("🏆 **Temes que domines millor (Major nota mitjana):**")
-                    mejores = df_resumen.tail(5).sort_values(by=c_nota, ascending=False)
-                    for _, row in mejores.iterrows():
-                        st.write(f"- **{row[c_tema]}**: {row[c_nota]:.2f}")
-            else:
-                st.info("No s'han trobat columnes de 'tema' o 'nota' identificables a l'historial de testos per temes per fer l'anàlisi detallat.")
+                # Busquem dades de testos per a aquest tema
+                matches_test = df_tests[df_tests[c_tema].astype(str).str.contains(t_nom, case=False, na=False)]
+                n_tests = len(matches_test)
+                nota_mitjana_tema = matches_test[c_nota].mean() if n_tests > 0 else 0.0
+                
+                detalle_temas.append({
+                    "Tema": t_nom,
+                    "Progrés Estudi (%)": round(pct_estudi, 1),
+                    "Tests Fets": n_tests,
+                    "Nota Mitjana Test": round(nota_mitjana_tema, 2) if n_tests > 0 else "Sense testos"
+                })
+            
+            df_detall_final = pd.DataFrame(detalle_temas)
+            st.dataframe(df_detall_final, use_container_width=True)
+            
         else:
-            st.info("Encara no hi ha suficients registres a 'Test per Temes' per calcular els teus punts febles. Fes algun test per veure l'anàlisi aquí!")
+            st.info("Encara no hi ha suficients registres a 'Test per Temes' amb format de tema identificable per mostrar el desglossament detallat.")
 
 
 # ------------------------------------------------------------------------------
