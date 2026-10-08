@@ -918,30 +918,23 @@ elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
                 st.warning("Selecciona al menys un dia d'estudi a la setmana.")
             else:
                 temario_oficial = [
-                    "Tema 01: Constitució Espanyola, Estatut d'Autonomia, Administració catalana e institucions",
-                    "Tema 02: Personal al servei d'administracions públiques, funció pública de la Generalitat, drets, deures i règim disciplinari",
-                    "Tema 03: Llei 31/1995 de Prevenció de Riscos Laborals, EPIs i normativa de desplegament",
-                    "Tema 04: Llei 19/2020 d'igualtat de tracte i no discriminació",
-                    "Tema 05: Llei 17/2015 d'igualtat efectiva de dones i hòmens (Cap. 1, 3 i 4)",
-                    "Tema 06: Llei 5/1994 de serveis de prevenció i extinció d'incendis i salvaments de Catalunya i Llei 4/1997 de Protecció Civil",
-                    "Tema 07: Decret 276/2016 de funcions de guàrdia i sistema de comandament, i Decret 12/2023 de reestructuració del departament d'Interior",
-                    "Tema 08: Teoria del Foc", "Tema 09: Física", "Tema 10: Química", "Tema 11: Electricitat", "Tema 12: Instal·lacions",
-                    "Tema 13: Hidràulica i Bombes", "Tema 14: Cartografia i Orientació", "Tema 15: Construcció", "Tema 16: Intervenció bàsica en assistències tècniques",
-                    "Tema 17: Comunicacions per ràdio", "Tema 18: Vehicles d'intervenció en emergències", "Tema 19: Conducció i mecànica", "Tema 20: Equips de protecció individual en emergències",
-                    "Tema 21: Introducció a la gestió d'emergències i Protecció Civil", "Tema 22: Principis i característiques del Sistema de Comandament", "Tema 23: Prevenció bàsica d'incendis",
-                    "Tema 24: Intervenció bàsica en incendis estructurals", "Tema 25: Intervenció bàsica en incendis forestals", "Tema 26: Prevenció incendis diversos", "Tema 27: Intervenció bàsica en riscs NRBQ",
-                    "Tema 28: Assistència sanitària", "Tema 29: Intervenció bàsica en incidents de múltiples víctimes", "Tema 30: Intervenció bàsica en estructures col·lapse", "Tema 31: Intervenció bàsica al medi natural terrestre",
-                    "Tema 32: Intervenció bàsica en accidents de mobilitat viària", "Tema 33: Intervenció bàsica en rescat urbà", "Tema 34: Intervenció bàsica en inundacions"
+                    "Tema 01: Constitució i Estatut", "Tema 02: Funció Pública", "Tema 03: Prevenció Riscos Laborals",
+                    "Tema 04: Igualtat i no discriminació", "Tema 05: Igualtat efectiva", "Tema 06: Incendis i Protecció Civil",
+                    "Tema 07: Estructura Departament Interior", "Tema 08: Teoria del Foc", "Tema 09: Física", "Tema 10: Química",
+                    "Tema 11: Electricitat", "Tema 12: Instal·lacions", "Tema 13: Hidràulica i Bombes", "Tema 14: Cartografia",
+                    "Tema 15: Construcció", "Tema 16: Assistències tècniques", "Tema 17: Comunicacions", "Tema 18: Vehicles",
+                    "Tema 19: Conducció i mecànica", "Tema 20: EPIs", "Tema 21: Gestió d'emergències", "Tema 22: Comandament",
+                    "Tema 23: Prevenció incendis", "Tema 24: Incendis estructurals", "Tema 25: Incendis forestals", "Tema 26: Incendis diversos",
+                    "Tema 27: Riscs NRBQ", "Tema 28: Assistència sanitària", "Tema 29: Múltiples víctimes", "Tema 30: Estructures col·lapse",
+                    "Tema 31: Medi natural", "Tema 32: Accidents viaris", "Tema 33: Rescat urbà", "Tema 34: Inundacions"
                 ]
 
                 prompt = (
-                    f"Actua com un planificador expert per a oposicions de Bombers de la Generalitat. "
-                    f"Crea un pla d'estudi teòric basat ÚNICAMENT en els títols dels temes llistats avall. "
-                    f"Estructura les sessions a raó de {hs} hores diàries (per exemple: 3 hores de lectura/subratllat i 1 hora de test). "
-                    f"IMPORTANTÍSSIM: Comença la Setmana 1 estrictament **avui dijous** i demà divendres assignant les primeres tasques. A partir de la Setmana 2, continua la seqüència consecutiva de dilluns a divendres. "
-                    f"Torna el resultat estrictament en format JSON pur amb una llista d'objectes per setmana que continguen 'semana', 'objetivo' i 'dias' (amb 'dia' i 'tareas'). "
-                    f" RESPON EN CATALÀ.\n\n"
-                    f"Llistat de temes:\n" + "\n".join(temario_oficial)
+                    f"Crea un pla d'estudi per a oposicions de Bombers basat en aquests 34 temes. "
+                    f"Cada dia ha de tenir 4 hores (3h teoria + 1h test). "
+                    f"IMPORTANT: La Setmana 1 comença avui dijous i demà divendres. Després segueix de dilluns a divendres. "
+                    f"Torna el resultat **estrictament en JSON pur** amb una llista d'objectes: setmana, objetivo, dias (dia, tareas). "
+                    f"Tot en català.\n\nTemes:\n" + "\n".join(temario_oficial)
                 )
 
 
