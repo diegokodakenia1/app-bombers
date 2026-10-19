@@ -18,12 +18,10 @@ st.set_page_config(
     page_icon="🚒",
     layout="wide"
 )
-# ==============================================================================
-# CONFIGURACIÓN DE SUPABASE Y RUTINAS POR DEFECTO
-# ==============================================================================
-RUTINAS_POR_DEFECTO = {}
 
-# Lectura directa y estricta de secretos (sin respaldos falsos)
+# ==============================================================================
+# CONFIGURACIÓN DE SUPABASE Y ESTADOS INICIALES
+# ==============================================================================
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
@@ -36,78 +34,6 @@ def init_supabase():
         return None
 
 supabase = init_supabase()
-
-# Asegurarnos de que las rutinas NUNCA empiecen vacías
-if "mis_rutinas" not in st.session_state:
-    st.session_state.mis_rutinas = RUTINAS_POR_DEFECTO.copy()
-
-# Cargar tu historial de marcas del gimnasio desde Supabase
-if "historial_marcas" not in st.session_state:
-    try:
-        res_m = supabase.storage.from_("temarios").download("datos/historial_marcas.json")
-        st.session_state.historial_marcas = json.loads(res_m.decode("utf-8"))
-    except:
-        st.session_state.historial_marcas = []
-
-def guardar_marcas_nube():
-    try:
-        json_bytes = json.dumps(st.session_state.historial_marcas, ensure_ascii=False).encode("utf-8")
-        try:
-            supabase.storage.from_("temarios").remove(["datos/historial_marcas.json"])
-        except:
-            pass
-        supabase.storage.from_("temarios").upload(
-            path="datos/historial_marcas.json",
-            file=json_bytes,
-            file_options={"content-type": "application/json"}
-        )
-    except Exception as e:
-        st.error(f"Error en desar les marques al núvol: {e}")
-
-# Cargar historial de carreras desde Supabase al iniciar
-if "historial_carreras" not in st.session_state:
-    try:
-        res_hc = supabase.storage.from_("temarios").download("datos/historial_carreras.json")
-        st.session_state.historial_carreras = json.loads(res_hc.decode("utf-8"))
-    except:
-        st.session_state.historial_carreras = []
-
-def guardar_carreras_nube():
-    try:
-        json_bytes = json.dumps(st.session_state.historial_carreras, ensure_ascii=False).encode("utf-8")
-        try:
-            supabase.storage.from_("temarios").remove(["datos/historial_carreras.json"])
-        except:
-            pass
-        supabase.storage.from_("temarios").upload(
-            path="datos/historial_carreras.json",
-            file=json_bytes,
-            file_options={"content-type": "application/json"}
-        )
-    except Exception as e:
-        st.error(f"Error en desar l'historial de curses al núvol: {e}")
-
-# Cargar y extraer automáticamente los PDFs del temario desde Supabase al iniciar
-if "textos_pdfs_temario" not in st.session_state:
-    st.session_state.textos_pdfs_temario = {}
-    try:
-        archivos_nube = supabase.storage.from_("temarios").list()
-        
-        if archivos_nube:
-            for archivo in archivos_nube:
-                nombre_archivo = archivo.get("name") if isinstance(archivo, dict) else getattr(archivo, "name", None)
-                
-                if nombre_archivo and nombre_archivo.endswith(".pdf"):
-                    pdf_bytes = supabase.storage.from_("temarios").download(nombre_archivo)
-                    lector = pypdf.PdfReader(io.BytesIO(pdf_bytes))
-                    texto_completo = ""
-                    for pagina in lector.pages:
-                        texto_extraido = pagina.extract_text()
-                        if texto_extraido:
-                            texto_completo += texto_extraido + "\n"
-                    st.session_state.textos_pdfs_temario[nombre_archivo] = texto_completo
-    except Exception as e:
-        st.error(f"Error en connectar amb el bucket per als PDF: {e}")
 
 # Carga de la API Key de Gemini
 api_key = None
@@ -135,97 +61,64 @@ CSV_TEST_TEMAS = "historial_test_temas.csv"
 CSV_FALLOS_REPASO = "banco_fallos_repaso.csv"
 CSV_FLASHCARDS = "flashcards_guardadas.csv"
 
-LISTA_EJERCICIOS_HEAVY = [
-    "Press de banca plano con barra", "Press de banca plano con mancuernas",
-    "Press de banca inclinado con barra", "Press de banca inclinado con mancuernas",
-    "Dominadas pronas lastradas", "Dominadas libres (Pull-ups)", "Dominadas supinas (Chin-ups)",
-    "Press militar con barra de pie (Standing Overhead Press)", "Elevaciones laterales con mancuernas",
-    "Curl de bíceps con barra recta", "Press francés con barra Z en banco plano (Skull Crushers)",
-    "Sentadilla trasera con barra (Back Squat)", "Prensa de piernas inclinada 45º",
-    "Peso muerto convencional con barra", "Peso muerto rumano (Romanian Deadlift con barra o mancuernas)",
-    "Elevación de talones de pie en máquina (Standing Calf Raise)", "Plancha abdominal isométrica"
-]
-
-def generar_con_reintento(prompt_texto, intentos=6, espera=5):
-    if client is None:
-        return None
-    global MODELO_IA
-    for intento in range(intentos):
-        try:
-            resp = client.models.generate_content(model=MODELO_IA, contents=prompt_texto)
-            return resp
-        except Exception as e:
-            str_e = str(e)
-            if ("503" in str_e or "UNAVAILABLE" in str_e or "RESOURCE_EXHAUSTED" in str_e) and intento < intentos - 1:
-                time.sleep(espera)
-                continue
-            st.error(f"Detall exacte de l'error de Google: {e}")
-            return None
-    return None
-
-def sincronizar_desde_supabase():
-    if not supabase:
-        return
-    try:
-        res_bytes = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
-        if res_bytes:
-            rutinas_nube = json.loads(res_bytes.decode("utf-8"))
-            if isinstance(rutinas_nube, dict) and rutinas_nube:
-                st.session_state.mis_rutinas.update(rutinas_nube)
-    except Exception:
-        pass
-
-def guardar_rutinas_nube():
-    if supabase and "mis_rutinas" in st.session_state:
-        try:
-            json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
-            supabase.storage.from_("temarios").upload(
-                path="datos/mis_rutinas.json",
-                file=json_bytes,
-                file_options={"content-type": "application/json", "upsert": "true"}
-            )
-        except Exception:
-            try:
-                json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
-                supabase.storage.from_("temarios").update(
-                    path="datos/mis_rutinas.json",
-                    file=json_bytes,
-                    file_options={"content-type": "application/json"}
-                )
-            except Exception:
-                pass
-
-def inicializar_estados():
-    if supabase:
-        try:
-            res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
-            if res_bytes:
-                datos_nube = json.loads(res_bytes.decode("utf-8"))
-                if "plan_estudio_json" not in st.session_state:
-                    st.session_state.plan_estudio_json = datos_nube.get("plan_json", [])
-                if "progreso_estudio" not in st.session_state:
-                    st.session_state.progreso_estudio = datos_nube.get("progreso", {})
-                    
-                for k, v in st.session_state.progreso_estudio.items():
-                    st.session_state[k] = v
-        except Exception:
-            pass
-
-    sincronizar_desde_supabase()
-    
+# ==============================================================================
+# FUNCIONES DE SINCRONIZACIÓN PERSISTENTE (NÚVOL / SUPABASE)
+# ==============================================================================
+def inicializar_estados_globales():
+    # 1. Rutinas
     if "mis_rutinas" not in st.session_state:
+        st.session_state.mis_rutinas = {}
         if supabase:
             try:
                 res_rutinas = supabase.storage.from_("temarios").download("datos/mis_rutinas.json")
                 if res_rutinas:
                     st.session_state.mis_rutinas = json.loads(res_rutinas.decode("utf-8"))
-                else:
-                    st.session_state.mis_rutinas = {}
             except Exception:
-                st.session_state.mis_rutinas = {}
-        else:
-            st.session_state.mis_rutinas = {}
+                pass
 
+    # 2. Plan de estudio y progreso de checkboxes
+    if "plan_estudio_json" not in st.session_state or "progreso_estudio" not in st.session_state:
+        if supabase:
+            try:
+                res_bytes = supabase.storage.from_("temarios").download("datos/plan_estudio.json")
+                if res_bytes:
+                    datos_nube = json.loads(res_bytes.decode("utf-8"))
+                    st.session_state.plan_estudio_json = datos_nube.get("plan_json", [])
+                    st.session_state.progreso_estudio = datos_nube.get("progreso", {})
+            except Exception:
+                pass
+        if "plan_estudio_json" not in st.session_state:
+            st.session_state.plan_estudio_json = []
+        if "progreso_estudio" not in st.session_state:
+            st.session_state.progreso_estudio = {}
+
+    # Sincronizar checkboxes en session_state
+    for k, v in st.session_state.progreso_estudio.items():
+        st.session_state[k] = v
+
+    # 3. Textos de PDFs del temario (Descarga automática de la carpeta 'temarios/')
+    if "textos_pdfs_temario" not in st.session_state:
+        st.session_state.textos_pdfs_temario = {}
+        if supabase:
+            try:
+                archivos_nube = supabase.storage.from_("temarios").list("temarios")
+                if archivos_nube:
+                    for archivo in archivos_nube:
+                        nombre_archivo = archivo.get("name") if isinstance(archivo, dict) else getattr(archivo, "name", None)
+                        if nombre_archivo and nombre_archivo.endswith(".pdf"):
+                            ruta_completa = f"temarios/{nombre_archivo}"
+                            pdf_bytes = supabase.storage.from_("temarios").download(ruta_completa)
+                            lector = pypdf.PdfReader(io.BytesIO(pdf_bytes))
+                            texto_completo = ""
+                            for pagina in lector.pages:
+                                texto_extraido = pagina.extract_text()
+                                if texto_extraido:
+                                    texto_completo += texto_extraido + "\n"
+                            st.session_state.textos_pdfs_temario[nombre_archivo] = texto_completo
+            except Exception:
+                pass
+
+    # 4. Historiales
     if "historico" not in st.session_state:
         st.session_state.historico = pd.read_csv(CSV_SIMULACROS).to_dict("records") if os.path.exists(CSV_SIMULACROS) else []
     if "historico_test_temas" not in st.session_state:
@@ -237,55 +130,19 @@ def inicializar_estados():
     if "historial_marcas" not in st.session_state:
         st.session_state.historial_marcas = []
 
-inicializar_estados()
+inicializar_estados_globales()
 
-if st.sidebar.button("🔄 Sincronitzar amb el Núvol"):
-    if "mis_rutinas" in st.session_state:
-        del st.session_state.mis_rutinas
-    sincronizar_desde_supabase()
-    st.rerun()
-
-def guardar_simulacros_disco():
-    if st.session_state.historico:
-        df = pd.DataFrame(st.session_state.historico)
-        df.to_csv(CSV_SIMULACROS, index=False)
-        if supabase:
-            try:
-                json_bytes = df.to_json(orient="records").encode("utf-8")
-                supabase.storage.from_("temarios").upload(
-                    path="datos/historico_simulacros.json", file=json_bytes,
-                    file_options={"content-type": "application/json", "upsert": "true"}
-                )
-            except Exception:
-                pass
-
-def guardar_test_temas_disco():
-    if st.session_state.historico_test_temas:
-        df = pd.DataFrame(st.session_state.historico_test_temas)
-        df.to_csv(CSV_TEST_TEMAS, index=False)
-        if supabase:
-            try:
-                json_bytes = df.to_json(orient="records").encode("utf-8")
-                supabase.storage.from_("temarios").upload(
-                    path="datos/historico_test_temas.json", file=json_bytes,
-                    file_options={"content-type": "application/json", "upsert": "true"}
-                )
-            except Exception:
-                pass
-
-def guardar_banco_fallos_disco():
-    if st.session_state.banco_fallos:
-        df = pd.DataFrame(st.session_state.banco_fallos)
-        df.to_csv(CSV_FALLOS_REPASO, index=False)
-        if supabase:
-            try:
-                json_bytes = df.to_json(orient="records").encode("utf-8")
-                supabase.storage.from_("temarios").upload(
-                    path="datos/banco_fallos.json", file=json_bytes,
-                    file_options={"content-type": "application/json", "upsert": "true"}
-                )
-            except Exception:
-                pass
+def guardar_rutinas_nube():
+    if supabase and "mis_rutinas" in st.session_state:
+        try:
+            json_bytes = json.dumps(st.session_state.mis_rutinas).encode("utf-8")
+            supabase.storage.from_("temarios").upload(
+                path="datos/mis_rutinas.json",
+                file=json_bytes,
+                file_options={"content-type": "application/json", "upsert": "true"}
+            )
+        except Exception:
+            pass
 
 def guardar_plan_nube():
     if supabase:
@@ -301,29 +158,28 @@ def guardar_plan_nube():
                 file_options={"content-type": "application/json", "upsert": "true"}
             )
         except Exception:
-            try:
-                json_bytes = json.dumps(datos_plan).encode("utf-8")
-                supabase.storage.from_("temarios").update(
-                    path="datos/plan_estudio.json", 
-                    file=json_bytes,
-                    file_options={"content-type": "application/json"}
-                )
-            except Exception as e:
-                st.error(f"Error en desar al núvol: {e}")
+            pass
 
-def guardar_flashcards_disco():
-    if st.session_state.flashcards:
-        df = pd.DataFrame(st.session_state.flashcards)
-        df.to_csv(CSV_FLASHCARDS, index=False)
+def guardar_test_temas_disco():
+    if st.session_state.historico_test_temas:
+        df = pd.DataFrame(st.session_state.historico_test_temas)
+        df.to_csv(CSV_TEST_TEMAS, index=False)
         if supabase:
             try:
                 json_bytes = df.to_json(orient="records").encode("utf-8")
                 supabase.storage.from_("temarios").upload(
-                    path="datos/flashcards.json", file=json_bytes,
+                    path="datos/historico_test_temas.json", file=json_bytes,
                     file_options={"content-type": "application/json", "upsert": "true"}
                 )
             except Exception:
                 pass
+
+if st.sidebar.button("🔄 Sincronitzar amb el Núvol"):
+    for k in ["mis_rutinas", "plan_estudio_json", "textos_pdfs_temario", "progreso_estudio"]:
+        if k in st.session_state:
+            del st.session_state[k]
+    inicializar_estados_globales()
+    st.rerun()
 
 # ------------------------------------------------------------------------------
 # PARSER Y RENDERIZADOR DE TEST INTERACTIVO
@@ -400,11 +256,10 @@ def renderizar_test_interactivo(texto_ia, clave_sesion, nombre_tema="General"):
         for nf in nuevos_fallos:
             if not any(f["enunciado"] == nf["enunciado"] for f in st.session_state.banco_fallos):
                 st.session_state.banco_fallos.append(nf)
-        guardar_banco_fallos_disco()
         st.success(f"🎉 Desat! Nota: {nota_calc}/10")
 
 # ------------------------------------------------------------------------------
-# PANEL DE NAVEGACIÓN LATERAL Y DEFINICIÓN DE OPCIÓN (Títulos originales con emojis)
+# PANEL DE NAVEGACIÓN LATERAL
 # ------------------------------------------------------------------------------
 st.sidebar.title("🚒 Panell de Navegació")
 opcion = st.sidebar.radio(
@@ -426,25 +281,18 @@ opcion = st.sidebar.radio(
 
 opcion_str = str(opcion)
 
-# ------------------------------------------------------------------------------
-# FUNCIÓN AUXILIAR PARA LIMPIAR NOMBRES DE ARCHIVOS
-# ------------------------------------------------------------------------------
 def limpiar_nombre_archivo(nombre):
     nfkd_form = unicodedata.normalize('NFKD', nombre)
     solo_ascii = nfkd_form.encode('ASCII', 'ignore').decode('ASCII')
     nombre_limpio = re.sub(r'[^\w\s.-]', '', solo_ascii)
-    nombre_limpio = nombre_limpio.replace(' ', '_')
-    return nombre_limpio
-
-def obtener_texto_acumulado():
-    return "".join(st.session_state.textos_pdfs_temario.values())
+    return nombre_limpio.replace(' ', '_')
 
 # ------------------------------------------------------------------------------
-# 1. BIBLIOTECA DEL TEMARIO (SINCRONIZADA CON SUPABASE)
+# 1. BIBLIOTECA DEL TEMARIO (CORREGIDA Y SINCRONIZADA)
 # ------------------------------------------------------------------------------
 if opcion == "📚 Biblioteca del Temari":
     st.header("📚 Biblioteca del Temari Oficial (Núvol)")
-    st.write("Puja els teus PDF. Els noms s'adaptaran automàticament per desar-se sense errors a Supabase.")
+    st.write("Puja els teus PDF. Es guarden automàticament a la subcarpeta del núvol de Supabase.")
 
     archivos_subidos = st.file_uploader("Puja fitxers PDF:", type=["pdf"], accept_multiple_files=True, key="up_temario")
 
@@ -457,7 +305,6 @@ if opcion == "📚 Biblioteca del Temari":
                     file=archivo.getvalue(),
                     file_options={"content-type": "application/pdf", "upsert": "true"}
                 )
-                
                 archivo.seek(0)
                 texto = "".join([p.extract_text() + "\n" for p in pypdf.PdfReader(archivo).pages if p.extract_text()])
                 if texto.strip():
@@ -492,7 +339,6 @@ if opcion == "📚 Biblioteca del Temari":
 
         st.markdown("---")
         st.subheader("👀 Visor de Documents")
-        
         pdf_seleccionado = st.selectbox("Selecciona el temari que vols visualizar:", nombres_nube, key="visor_temario_select")
         
         if pdf_seleccionado:
@@ -519,6 +365,261 @@ if opcion == "📚 Biblioteca del Temari":
                                 key="btn_descarga_visor"
                             )
                     except Exception as e:
+                        st.error(f"Error en descarregar el PDF per a la visualització: {e}")
+
+# ------------------------------------------------------------------------------
+# 6. PLA D'ESTUDI (SEQUENCIAL I FLEXIBLE)
+# ------------------------------------------------------------------------------
+elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
+    st.header("📅 Planificador Estratègic d'Estudi (Flexible)")
+    st.write("Planificació teòrica per sessions consecutives. Avança al teu ritme sense dependre de dies fixos.")
+    
+    col_ps1, _ = st.columns(2)
+    with col_ps1:
+        st.slider("Hores estimades per sessió/setmana:", 5, 50, 20, 5, key="slider_horas_estudio")
+
+    if st.button("🚀 Generar / Reiniciar Pla Estratègic"):
+        pla_local = [
+            {
+                "semana": "1: Domini del bloc de marc constitucional",
+                "objetivo": "Inici del temari de manera flexible.",
+                "sesiones": [
+                    {"titulo": "Sessió 1", "tareas": ["Tema 01: Constitución Española, Estatut d'Autonomia, Administración catalana e instituciones - 3 hores de lectura i subratllat + 1 hora de test"]},
+                    {"titulo": "Sessió 2", "tareas": ["Tema 01: Constitución Española, Estatut d'Autonomia, Administración catalana e instituciones - 3 hores de profundització i esquemes + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "2: Legislació de igualtat i normativa específica",
+                "objetivo": "Continuació del bloc normatiu.",
+                "sesiones": [
+                    {"titulo": "Sessió 3", "tareas": ["Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario - 3 hores de lectura i subratllat + 1 hora de test"]},
+                    {"titulo": "Sessió 4", "tareas": ["Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario - 3 hores d'estudi de règim disciplinari + 1 hora de test"]},
+                    {"titulo": "Sessió 5", "tareas": ["Tema 03: Ley 31/1995 de Prevención de Riesgos Laborales, EPIs y normativa de despliegue - 3 hores d'estudi i esquemes + 1 hora de test"]},
+                    {"titulo": "Sessió 6", "tareas": ["Tema 04: Ley 19/2020 d'igualtat de tracte i no discriminació - 3 hores de lectura i subratllat + 1 hora de test"]},
+                    {"titulo": "Sessió 7", "tareas": ["Tema 05: Ley 17/2015 d'igualtat efectiva de mujeres y hombres (Cap. 1, 3 y 4) - 3 hores de lectura i esquemes + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "3: Ciències bàsiques aplicades: Fuego, Física y Química",
+                "objetivo": "Física i química aplicada al foc.",
+                "sesiones": [
+                    {"titulo": "Sessió 8", "tareas": ["Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil - 3 hores de lectura i estudi + 1 hora de test"]},
+                    {"titulo": "Sessió 9", "tareas": ["Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil - 3 hores d'esquemes i consolidació + 1 hora de test"]},
+                    {"titulo": "Sessió 10", "tareas": ["Tema 07: Decreto 276/2016 de funciones de guardia y sistema de mando, y Decreto 12/2023 de reestructuración del departamento de Interior - 3 hores d'estudi detallat + 1 hora de test"]},
+                    {"titulo": "Sessió 11", "tareas": ["Tema 08: Teoría del Fuego - 3 hores de lectura i esquemes + 1 hora de test"]},
+                    {"titulo": "Sessió 12", "tareas": ["Tema 09: Física - 3 hores de lectura i conceptes fonamentals + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "4: Electricidad, Instalaciones, hidráulica y orientación",
+                "objetivo": "Hidràulica, instal·lacions i orientació.",
+                "sesiones": [
+                    {"titulo": "Sessió 13", "tareas": ["Tema 09: Física - 3 hores de resolució de problemes + 1 hora de test"]},
+                    {"titulo": "Sessió 14", "tareas": ["Tema 10: Química - 3 hores de lectura i formulació bàsica + 1 hora de test"]},
+                    {"titulo": "Sessió 15", "tareas": ["Tema 10: Química - 3 hores d'estudi de reaccions i productes perillosos + 1 hora de test"]},
+                    {"titulo": "Sessió 16", "tareas": ["Tema 11: Electricidad - 3 hores de lectura i esquemes + 1 hora de test"]},
+                    {"titulo": "Sessió 17", "tareas": ["Tema 12: Instalaciones - 3 hores d'estudi d'edificació i serveis + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "5: Construcción, asistencia técnica, comunicaciones y parque",
+                "objetivo": "Sistemes de construcció i vehicles.",
+                "sesiones": [
+                    {"titulo": "Sessió 18", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores de teoria de fluids e hidrostàtica + 1 hora de test"]},
+                    {"titulo": "Sessió 19", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores d'hidrodinàmica i càlcul de bombes + 1 hora de test"]},
+                    {"titulo": "Sessió 20", "tareas": ["Tema 14: Cartografía y Orientación - 3 hores d'estudi de mapes i escales + 1 hora de test"]},
+                    {"titulo": "Sessió 21", "tareas": ["Tema 15: Construcción - 3 hores de lectura i anàlisi d'elements estructurals + 1 hora de test"]},
+                    {"titulo": "Sessió 22", "tareas": ["Tema 16: Intervención básica en asistencias técnicas - 3 hores d'estudi de procediments + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "6: Protección individual, gestión operativa e intervención",
+                "objetivo": "EPIs i operativitat contra incendis.",
+                "sesiones": [
+                    {"titulo": "Sessió 23", "tareas": ["Tema 17: Comunicaciones por radio - 3 hores d'estudi de protocols i xarxes + 1 hora de test"]},
+                    {"titulo": "Sessió 24", "tareas": ["Tema 18: Vehículos de intervención en emergencias - 3 hores de lectura i tipologies + 1 hora de test"]},
+                    {"titulo": "Sessió 25", "tareas": ["Tema 19: Conducción y mecánica - 3 hores d'estudi de mecànica i conducció d'emergència + 1 hora de test"]},
+                    {"titulo": "Sessió 26", "tareas": ["Tema 20: Equipos de protección individual en emergencias - 3 hores d'estudi d'EPIs i ERA + 1 hora de test"]},
+                    {"titulo": "Sessió 27", "tareas": ["Tema 21: Introducción a la gestión de emergencias y Protección Civil - 3 hores de lectura i esquemes + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "7: Incendios forestales, riesgos especiales y NRBQ",
+                "objetivo": "Incendis forestals i riscos específics.",
+                "sesiones": [
+                    {"titulo": "Sessió 28", "tareas": ["Tema 22: Principios y características del Sistema de Mando - 3 hores d'anàlisi del sistema + 1 hora de test"]},
+                    {"titulo": "Sessió 29", "tareas": ["Tema 23: Prevención básica de incendios - 3 hores de lectura i normativa + 1 hora de test"]},
+                    {"titulo": "Sessió 30", "tareas": ["Tema 24: Intervención básica en incendios estructurales - 3 hores d'estudi tàctic i desenvolupament + 1 hora de test"]},
+                    {"titulo": "Sessió 31", "tareas": ["Tema 24: Intervención básica en incendis estructurals - 3 hores de profundització e hidràulica d'incendis + 1 hora de test"]},
+                    {"titulo": "Sessió 32", "tareas": ["Tema 25: Intervención básica en incendios forestales - 3 hores d'estudi de comportament i extinció + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "8: Atención sanitaria, múltiples víctimas y salvamento",
+                "objetivo": "Sanitària i rescats.",
+                "sesiones": [
+                    {"titulo": "Sessió 33", "tareas": ["Tema 26: Prevención incendios varios - 3 hores de lectura i esquemes + 1 hora de test"]},
+                    {"titulo": "Sessió 34", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 hores de zonificació i identificació de substàncies + 1 hora de test"]},
+                    {"titulo": "Sessió 35", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 hores de descontaminació i protocols + 1 hora de test"]},
+                    {"titulo": "Sessió 36", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores de suport vital bàsic i anatomia + 1 hora de test"]},
+                    {"titulo": "Sessió 37", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores d'atenció al trauma i patologies urgents + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "9: Rescate en accidentes de tráfico, entornos urbanos e inundaciones",
+                "objetivo": "Tancament de la volta amb rescats i inundacions.",
+                "sesiones": [
+                    {"titulo": "Sessió 38", "tareas": ["Tema 29: Intervención básica en incidentes de múltiples víctimas - 3 hores d'estudi de triatge i organització + 1 hora de test"]},
+                    {"titulo": "Sessió 39", "tareas": ["Tema 30: Intervención básica en estructuras colapsadas - 3 hores d'apuntalaments i cerca + 1 hora de test"]},
+                    {"titulo": "Sessió 40", "tareas": ["Tema 31: Intervención básica al medi natural terrestre - 3 hores de tècniques de rescat terrestre + 1 hora de test"]},
+                    {"titulo": "Sessió 41", "tareas": ["Tema 32: Intervención básica en accidentes de movilidad viaria - 3 hores d'estudi d'excarceració i estabilització + 1 hora de test"]},
+                    {"titulo": "Sessió 42", "tareas": ["Tema 33: Intervención básica en rescate urbano - 3 hores d'estudi de rescat en altura i espais confinats + 1 hora de test"]}
+                ]
+            },
+            {
+                "semana": "10: Repàs final i tancament",
+                "objetivo": "Últims temes i consolidació de la volta.",
+                "sesiones": [
+                    {"titulo": "Sessió 43", "tareas": ["Tema 34: Intervención básica en inundaciones - 3 hores d'estudi de dinàmiques de riades i rescat aquàtic + 1 hora de test"]},
+                    {"titulo": "Sessió 44", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores de repàs general d'algoritmes + 1 hora de test global de sanitat"]},
+                    {"titulo": "Sessió 45", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores de repàs de fórmules i càlculs aplicats + 1 hora de test global d'hidràulica"]}
+                ]
+            }
+        ]
+
+        st.session_state.plan_estudio_json = pla_local
+        st.success("¡Pla d'estudi seqüencial generat amb èxit!")
+        guardar_plan_nube()
+
+    if "plan_estudio_json" in st.session_state and st.session_state.plan_estudio_json:
+        st.markdown("---")
+        st.subheader("📋 El teu Pla d'Estudi Seqüencial")
+        if "progreso_estudio" not in st.session_state:
+            st.session_state.progreso_estudio = {}
+
+        for sem in st.session_state.plan_estudio_json:
+            with st.expander(f"Bloc {sem.get('semana')}: {sem.get('objetivo', '')}", expanded=False):
+                for s_info in sem.get('sesiones', []):
+                    sesion_titulo = s_info.get('titulo', '')
+                    st.markdown(f"**📌 {sesion_titulo}**")
+                    for t_idx, tarea in enumerate(s_info.get('tareas', [])):
+                        key_check = f"chk_sem_{sem.get('semana')}_{sesion_titulo}_{t_idx}"
+                        if key_check not in st.session_state:
+                            st.session_state[key_check] = st.session_state.progreso_estudio.get(key_check, False)
+
+                        def actualizar_checkbox(k=key_check):
+                            st.session_state.progreso_estudio[k] = st.session_state[k]
+                            guardar_plan_nube()
+
+                        st.checkbox(tarea, key=key_check, on_change=actualizar_checkbox)
+                    st.markdown("")
+
+# ------------------------------------------------------------------------------
+# 10. ESTADÍSTIQUES I PROGRESSOS (AMB PESTANYA TEMARI DETALLADA)
+# ------------------------------------------------------------------------------
+elif "10." in opcion_str or "Estadísticas" in opcion_str or "Estadístiques" in opcion_str:
+    st.header("📊 Panell d'Estadístiques i Progrés")
+    t1, t2, t3 = st.tabs(["📝 Simulacres", "🎯 Test per Temes", "📚 Temari"])
+    
+    with t1:
+        if "historico" in st.session_state and st.session_state.historico:
+            df = pd.DataFrame(st.session_state.historico)
+            st.metric("Nota Mitjana Simulacres", f"{df['nota'].mean():.2f}")
+            st.dataframe(df, use_container_width=True)
+            if "fecha" in df.columns and "nota" in df.columns:
+                st.line_chart(df.set_index("fecha")[["nota"]])
+        else: 
+            st.info("Sense registres de simulacres.")
+            
+    with t2:
+        if "historico_test_temas" in st.session_state and st.session_state.historico_test_temas:
+            df2 = pd.DataFrame(st.session_state.historico_test_temas)
+            st.metric("Nota Mitjana Temes", f"{df2['nota'].mean():.2f}")
+            st.dataframe(df2, use_container_width=True)
+            if "fecha" in df2.columns and "nota" in df2.columns:
+                st.line_chart(df2.set_index("fecha")[["nota"]])
+        else: 
+            st.info("Sense registres de test per temes.")
+            
+    with t3:
+        st.subheader("📈 Estat i Maduració Global del Temari")
+        progreso = st.session_state.get("progreso_estudio", {})
+        plan = st.session_state.get("plan_estudio_json", [])
+        
+        total_tareas = 0
+        tareas_completadas = 0
+        
+        for sem in plan:
+            for s_info in sem.get('sesiones', []):
+                sesion_titulo = s_info.get('titulo', '')
+                for t_idx, _ in enumerate(s_info.get('tareas', [])):
+                    total_tareas += 1
+                    key_check = f"chk_sem_{sem.get('semana')}_{sesion_titulo}_{t_idx}"
+                    if progreso.get(key_check, False):
+                        tareas_completadas += 1
+                        
+        if total_tareas > 0:
+            porcentaje_completado = (tareas_completadas / total_tareas) * 100
+            voltas_completas = tareas_completadas // total_tareas
+            tareas_vuelta_actual = tareas_completadas % total_tareas
+            porcentaje_vuelta_actual = (tareas_vuelta_actual / total_tareas) * 100
+        else:
+            porcentaje_completado = 0
+            voltas_completas = 0
+            porcentaje_vuelta_actual = 0
+
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            st.metric("Temari Completat (Total)", f"{porcentaje_completado:.1f}%")
+        with col_m2:
+            st.metric("Voltes completes", f"{voltas_completas}")
+        with col_m3:
+            st.metric("Progrés volta actual", f"{porcentaje_vuelta_actual:.1f}%")
+            
+        st.progress(min(porcentaje_vuelta_actual / 100.0, 1.0))
+        st.markdown("---")
+        
+        st.subheader("🔍 Desglossament Detallat per Tema")
+        historico_tests = st.session_state.get("historico_test_temas", [])
+        df_tests = pd.DataFrame(historico_tests) if historico_tests else pd.DataFrame()
+        col_tema_candidatas = [c for c in df_tests.columns if 'tema' in c.lower()] if not df_tests.empty else []
+        col_nota_candidatas = [c for c in df_tests.columns if 'nota' in c.lower() or 'puntuacion' in c.lower()] if not df_tests.empty else []
+        
+        temario_oficial_nombres = [f"Tema {i:02d}" for i in range(1, 35)]
+        detalle_temas = []
+        
+        for t_nom in temario_oficial_nombres:
+            t_total_tema = 0
+            t_completades_tema = 0
+            for sem in plan:
+                for s_info in sem.get('sesiones', []):
+                    sesion_titulo = s_info.get('titulo', '')
+                    for t_idx, tarea_txt in enumerate(s_info.get('tareas', [])):
+                        if t_nom.lower() in tarea_txt.lower():
+                            t_total_tema += 1
+                            key_check = f"chk_sem_{sem.get('semana')}_{sesion_titulo}_{t_idx}"
+                            if progreso.get(key_check, False):
+                                t_completades_tema += 1
+            
+            pct_estudi = (t_completades_tema / t_total_tema * 100) if t_total_tema > 0 else 0.0
+            
+            n_tests, nota_mitjana_tema = 0, 0.0
+            if not df_tests.empty and col_tema_candidatas and col_nota_candidatas:
+                c_tema, c_nota = col_tema_candidatas[0], col_nota_candidatas[0]
+                matches_test = df_tests[df_tests[c_tema].astype(str).str.contains(t_nom, case=False, na=False)]
+                n_tests = len(matches_test)
+                if n_tests > 0:
+                    nota_mitjana_tema = matches_test[c_nota].mean()
+            
+            detalle_temas.append({
+                "Tema": t_nom,
+                "Progrés Estudi (%)": round(pct_estudi, 1),
+                "Tests Fets": n_tests,
+                "Nota Mitjana Test": round(nota_mitjana_tema, 2) if n_tests > 0 else "Sense testos"
+            })
+        
+        df_detall_final = pd.DataFrame(detalle_temas)
+        st.dataframe(df_detall_final, use_container_width=True)
                         st.error(f"Error en descarregar el PDF per a la visualització: {e}")
 
 # ------------------------------------------------------------------------------
