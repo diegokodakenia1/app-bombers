@@ -744,164 +744,163 @@ elif "Preparación Física" in opcion or "Preparació Física" in opcion:
         st.dataframe(pd.DataFrame(st.session_state.historial_proves_oficials), use_container_width=True)
 
 # ------------------------------------------------------------------------------
-# 6. PLA D'ESTUDI
+# 6. PLA D'ESTUDI (SEQUENCIAL I FLEXIBLE)
 # ------------------------------------------------------------------------------
 elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
     st.header("📅 Planificador Estratègic d'Estudi (Flexible)")
-    st.write("Planificació teòrica seqüencial per sessions. Avança al teu ritme sense dependre de dies fixos.")
+    st.write("Planificació teòrica per sessions consecutives. Avança al teu ritme sense dependre de dies fixos.")
     
-    col_ps1, col_ps2 = st.columns(2)
+    col_ps1, _ = st.columns(2)
     with col_ps1:
-        hs = st.slider("Hores estimades per sessió/setmana:", 5, 50, 20, 5)
-    with col_ps2:
-        st.info("💡 **Mode seqüencial:** Si un dia no pots estudiar, no passa res. Només has de continuar per la següent sessió quan tornis a tenir temps.")
+        st.slider("Hores estimades per sessió/setmana:", 5, 50, 20, 5, key="slider_horas_estudio")
 
-    if st.button("🚀 Generar / Reiniciar Pla Estratègic"):
-        # Generació local basada en sessions consecutives (sense dies fixos)
-        pla_local = [
-            {
-                "semana": "1: Domini del bloc de marc constitucional",
-                "objetivo": "Inici del temari de manera flexible.",
-                "sesiones": [
-                    {"titulo": "Sessió 1", "tareas": ["Tema 01: Constitución Española, Estatut d'Autonomia, Administración catalana e instituciones - 3 hores de lectura i subratllat + 1 hora de test"]},
-                    {"titulo": "Sessió 2", "tareas": ["Tema 01: Constitución Española, Estatut d'Autonomia, Administración catalana e instituciones - 3 hores de profundització i esquemes + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "2: Legislació de igualtat i normativa específica",
-                "objetivo": "Continuació del bloc normatiu.",
-                "sesiones": [
-                    {"titulo": "Sessió 3", "tareas": ["Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario - 3 hores de lectura i subratllat + 1 hora de test"]},
-                    {"titulo": "Sessió 4", "tareas": ["Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario - 3 hores d'estudi de règim disciplinari + 1 hora de test"]},
-                    {"titulo": "Sessió 5", "tareas": ["Tema 03: Ley 31/1995 de Prevención de Riesgos Laborales, EPIs y normativa de despliegue - 3 hores d'estudi i esquemes + 1 hora de test"]},
-                    {"titulo": "Sessió 6", "tareas": ["Tema 04: Ley 19/2020 d'igualtat de tracte i no discriminació - 3 hores de lectura i subratllat + 1 hora de test"]},
-                    {"titulo": "Sessió 7", "tareas": ["Tema 05: Ley 17/2015 d'igualtat efectiva de mujeres y hombres (Cap. 1, 3 y 4) - 3 hores de lectura i esquemes + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "3: Ciències bàsiques aplicades: Fuego, Física y Química",
-                "objetivo": "Física i química aplicada al foc.",
-                "sesiones": [
-                    {"titulo": "Sessió 8", "tareas": ["Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil - 3 hores de lectura i estudi + 1 hora de test"]},
-                    {"titulo": "Sessió 9", "tareas": ["Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil - 3 hores d'esquemes i consolidació + 1 hora de test"]},
-                    {"titulo": "Sessió 10", "tareas": ["Tema 07: Decreto 276/2016 de funciones de guardia y sistema de mando, y Decreto 12/2023 de reestructuración del departamento de Interior - 3 hores d'estudi detallat + 1 hora de test"]},
-                    {"titulo": "Sessió 11", "tareas": ["Tema 08: Teoría del Fuego - 3 hores de lectura i esquemes + 1 hora de test"]},
-                    {"titulo": "Sessió 12", "tareas": ["Tema 09: Física - 3 hores de lectura i conceptes fonamentals + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "4: Electricidad, Instalaciones, hidráulica y orientación",
-                "objetivo": "Hidràulica, instal·lacions i orientació.",
-                "sesiones": [
-                    {"titulo": "Sessió 13", "tareas": ["Tema 09: Física - 3 hores de resolució de problemes + 1 hora de test"]},
-                    {"titulo": "Sessió 14", "tareas": ["Tema 10: Química - 3 hores de lectura i formulació bàsica + 1 hora de test"]},
-                    {"titulo": "Sessió 15", "tareas": ["Tema 10: Química - 3 hores d'estudi de reaccions i productes perillosos + 1 hora de test"]},
-                    {"titulo": "Sessió 16", "tareas": ["Tema 11: Electricidad - 3 hores de lectura i esquemes + 1 hora de test"]},
-                    {"titulo": "Sessió 17", "tareas": ["Tema 12: Instalaciones - 3 hores d'estudi d'edificació i serveis + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "5: Construcción, asistencia técnica, comunicaciones y parque",
-                "objetivo": "Sistemes de construcció i vehicles.",
-                "sesiones": [
-                    {"titulo": "Sessió 18", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores de teoria de fluids e hidrostàtica + 1 hora de test"]},
-                    {"titulo": "Sessió 19", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores d'hidrodinàmica i càlcul de bombes + 1 hora de test"]},
-                    {"titulo": "Sessió 20", "tareas": ["Tema 14: Cartografía y Orientación - 3 hores d'estudi de mapes i escales + 1 hora de test"]},
-                    {"titulo": "Sessió 21", "tareas": ["Tema 15: Construcción - 3 hores de lectura i anàlisi d'elements estructurals + 1 hora de test"]},
-                    {"titulo": "Sessió 22", "tareas": ["Tema 16: Intervención básica en asistencias técnicas - 3 hores d'estudi de procediments + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "6: Protección individual, gestión operativa e intervención",
-                "objetivo": "EPIs i operativitat contra incendis.",
-                "sesiones": [
-                    {"titulo": "Sessió 23", "tareas": ["Tema 17: Comunicaciones por radio - 3 hores d'estudi de protocols i xarxes + 1 hora de test"]},
-                    {"titulo": "Sessió 24", "tareas": ["Tema 18: Vehículos de intervención en emergencias - 3 hores de lectura i tipologies + 1 hora de test"]},
-                    {"titulo": "Sessió 25", "tareas": ["Tema 19: Conducción y mecánica - 3 hores d'estudi de mecànica i conducció d'emergència + 1 hora de test"]},
-                    {"titulo": "Sessió 26", "tareas": ["Tema 20: Equipos de protección individual en emergencias - 3 hores d'estudi d'EPIs i ERA + 1 hora de test"]},
-                    {"titulo": "Sessió 27", "tareas": ["Tema 21: Introducción a la gestión de emergencias y Protección Civil - 3 hores de lectura i esquemes + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "7: Incendios forestales, riesgos especiales y NRBQ",
-                "objetivo": "Incendis forestals i riscos específics.",
-                "sesiones": [
-                    {"titulo": "Sessió 28", "tareas": ["Tema 22: Principios y características del Sistema de Mando - 3 hores d'anàlisi del sistema + 1 hora de test"]},
-                    {"titulo": "Sessió 29", "tareas": ["Tema 23: Prevención básica de incendios - 3 hores de lectura i normativa + 1 hora de test"]},
-                    {"titulo": "Sessió 30", "tareas": ["Tema 24: Intervención básica en incendios estructurales - 3 hores d'estudi tàctic i desenvolupament + 1 hora de test"]},
-                    {"titulo": "Sessió 31", "tareas": ["Tema 24: Intervención básica en incendis estructurals - 3 hores de profundització e hidràulica d'incendis + 1 hora de test"]},
-                    {"titulo": "Sessió 32", "tareas": ["Tema 25: Intervención básica en incendios forestales - 3 hores d'estudi de comportament i extinció + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "8: Atención sanitaria, múltiples víctimas y salvamento",
-                "objetivo": "Sanitària i rescats.",
-                "sesiones": [
-                    {"titulo": "Sessió 33", "tareas": ["Tema 26: Prevención incendios varios - 3 hores de lectura i esquemes + 1 hora de test"]},
-                    {"titulo": "Sessió 34", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 hores de zonificació i identificació de substàncies + 1 hora de test"]},
-                    {"titulo": "Sessió 35", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 hores de descontaminació i protocols + 1 hora de test"]},
-                    {"titulo": "Sessió 36", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores de suport vital bàsic i anatomia + 1 hora de test"]},
-                    {"titulo": "Sessió 37", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores d'atenció al trauma i patologies urgents + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "9: Rescate en accidentes de tráfico, entornos urbanos e inundaciones",
-                "objetivo": "Tancament de la volta amb rescats i inundacions.",
-                "sesiones": [
-                    {"titulo": "Sessió 38", "tareas": ["Tema 29: Intervención básica en incidentes de múltiples víctimas - 3 hores d'estudi de triatge i organització + 1 hora de test"]},
-                    {"titulo": "Sessió 39", "tareas": ["Tema 30: Intervención básica en estructuras colapsadas - 3 hores d'apuntalaments i cerca + 1 hora de test"]},
-                    {"titulo": "Sessió 40", "tareas": ["Tema 31: Intervención básica al medi natural terrestre - 3 hores de tècniques de rescat terrestre + 1 hora de test"]},
-                    {"titulo": "Sessió 41", "tareas": ["Tema 32: Intervención básica en accidentes de movilidad viaria - 3 hores d'estudi d'excarceració i estabilització + 1 hora de test"]},
-                    {"titulo": "Sessió 42", "tareas": ["Tema 33: Intervención básica en rescate urbano - 3 hores d'estudi de rescat en altura i espais confinats + 1 hora de test"]}
-                ]
-            },
-            {
-                "semana": "10: Repàs final i tancament",
-                "objetivo": "Últims temes i consolidació de la volta.",
-                "sesiones": [
-                    {"titulo": "Sessió 43", "tareas": ["Tema 34: Intervención básica en inundaciones - 3 hores d'estudi de dinàmiques de riades i rescat aquàtic + 1 hora de test"]},
-                    {"titulo": "Sessió 44", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores de repàs general d'algoritmes + 1 hora de test global de sanitat"]},
-                    {"titulo": "Sessió 45", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores de repàs de fórmules i càlculs aplicats + 1 hora de test global d'hidràulica"]}
-                ]
-            }
-        ]
+    # Definició del pla per defecte a prova d'errors
+    pla_por_defecto = [
+        {
+            "semana": "1: Domini del bloc de marc constitucional",
+            "objetivo": "Inici del temari de manera flexible.",
+            "sesiones": [
+                {"titulo": "Sessió 1", "tareas": ["Tema 01: Constitución Española, Estatut d'Autonomia, Administración catalana e instituciones - 3 hores de lectura i subratllat + 1 hora de test"]},
+                {"titulo": "Sessió 2", "tareas": ["Tema 01: Constitución Española, Estatut d'Autonomia, Administración catalana e instituciones - 3 hores de profundització i esquemes + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "2: Legislació de igualtat i normativa específica",
+            "objetivo": "Continuació del bloc normatiu.",
+            "sesiones": [
+                {"titulo": "Sessió 3", "tareas": ["Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario - 3 hores de lectura i subratllat + 1 hora de test"]},
+                {"titulo": "Sessió 4", "tareas": ["Tema 02: Personal al servicio de administraciones públicas, función pública de la Generalitat, derechos, deberes y régimen disciplinario - 3 hores d'estudi de règim disciplinari + 1 hora de test"]},
+                {"titulo": "Sessió 5", "tareas": ["Tema 03: Ley 31/1995 de Prevención de Riesgos Laborales, EPIs y normativa de despliegue - 3 hores d'estudi i esquemes + 1 hora de test"]},
+                {"titulo": "Sessió 6", "tareas": ["Tema 04: Ley 19/2020 d'igualtat de tracte i no discriminació - 3 hores de lectura i subratllat + 1 hora de test"]},
+                {"titulo": "Sessió 7", "tareas": ["Tema 05: Ley 17/2015 d'igualtat efectiva de mujeres y hombres (Cap. 1, 3 y 4) - 3 hores de lectura i esquemes + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "3: Ciències bàsiques aplicades: Fuego, Física y Química",
+            "objetivo": "Física i química aplicada al foc.",
+            "sesiones": [
+                {"titulo": "Sessió 8", "tareas": ["Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil - 3 hores de lectura i estudi + 1 hora de test"]},
+                {"titulo": "Sessió 9", "tareas": ["Tema 06: Ley 5/1994 de servicios de prevención y extinción de incendios y salvamentos de Cataluña y Ley 4/1997 de Protección Civil - 3 hores d'esquemes i consolidació + 1 hora de test"]},
+                {"titulo": "Sessió 10", "tareas": ["Tema 07: Decreto 276/2016 de funciones de guardia y sistema de mando, y Decreto 12/2023 de reestructuración del departamento de Interior - 3 hores d'estudi detallat + 1 hora de test"]},
+                {"titulo": "Sessió 11", "tareas": ["Tema 08: Teoría del Fuego - 3 hores de lectura i esquemes + 1 hora de test"]},
+                {"titulo": "Sessió 12", "tareas": ["Tema 09: Física - 3 hores de lectura i conceptes fonamentals + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "4: Electricidad, Instalaciones, hidráulica y orientación",
+            "objetivo": "Hidràulica, instal·lacions i orientació.",
+            "sesiones": [
+                {"titulo": "Sessió 13", "tareas": ["Tema 09: Física - 3 hores de resolució de problemes + 1 hora de test"]},
+                {"titulo": "Sessió 14", "tareas": ["Tema 10: Química - 3 hores de lectura i formulació bàsica + 1 hora de test"]},
+                {"titulo": "Sessió 15", "tareas": ["Tema 10: Química - 3 hores d'estudi de reaccions i productes perillosos + 1 hora de test"]},
+                {"titulo": "Sessió 16", "tareas": ["Tema 11: Electricidad - 3 hores de lectura i esquemes + 1 hora de test"]},
+                {"titulo": "Sessió 17", "tareas": ["Tema 12: Instalaciones - 3 hores d'estudi d'edificació i serveis + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "5: Construcción, asistencia técnica, comunicaciones y parque",
+            "objetivo": "Sistemes de construcció i vehicles.",
+            "sesiones": [
+                {"titulo": "Sessió 18", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores de teoria de fluids e hidrostàtica + 1 hora de test"]},
+                {"titulo": "Sessió 19", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores d'hidrodinàmica i càlcul de bombes + 1 hora de test"]},
+                {"titulo": "Sessió 20", "tareas": ["Tema 14: Cartografía y Orientación - 3 hores d'estudi de mapes i escales + 1 hora de test"]},
+                {"titulo": "Sessió 21", "tareas": ["Tema 15: Construcción - 3 hores de lectura i anàlisi d'elements estructurals + 1 hora de test"]},
+                {"titulo": "Sessió 22", "tareas": ["Tema 16: Intervención básica en asistencias técnicas - 3 hores d'estudi de procediments + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "6: Protección individual, gestión operativa e intervención",
+            "objetivo": "EPIs i operativitat contra incendis.",
+            "sesiones": [
+                {"titulo": "Sessió 23", "tareas": ["Tema 17: Comunicaciones por radio - 3 hores d'estudi de protocols i xarxes + 1 hora de test"]},
+                {"titulo": "Sessió 24", "tareas": ["Tema 18: Vehículos de intervención en emergencias - 3 hores de lectura i tipologies + 1 hora de test"]},
+                {"titulo": "Sessió 25", "tareas": ["Tema 19: Conducción y mecánica - 3 hores d'estudi de mecànica i conducció d'emergència + 1 hora de test"]},
+                {"titulo": "Sessió 26", "tareas": ["Tema 20: Equipos de protección individual en emergencias - 3 hores d'estudi d'EPIs i ERA + 1 hora de test"]},
+                {"titulo": "Sessió 27", "tareas": ["Tema 21: Introducción a la gestión de emergencias y Protección Civil - 3 hores de lectura i esquemes + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "7: Incendios forestales, riesgos especiales y NRBQ",
+            "objetivo": "Incendis forestals i riscos específics.",
+            "sesiones": [
+                {"titulo": "Sessió 28", "tareas": ["Tema 22: Principios y características del Sistema de Mando - 3 hores d'anàlisi del sistema + 1 hora de test"]},
+                {"titulo": "Sessió 29", "tareas": ["Tema 23: Prevención básica de incendios - 3 hores de lectura i normativa + 1 hora de test"]},
+                {"titulo": "Sessió 30", "tareas": ["Tema 24: Intervención básica en incendios estructurales - 3 hores d'estudi tàctic i desenvolupament + 1 hora de test"]},
+                {"titulo": "Sessió 31", "tareas": ["Tema 24: Intervención básica en incendis estructurals - 3 hores de profundització e hidràulica d'incendis + 1 hora de test"]},
+                {"titulo": "Sessió 32", "tareas": ["Tema 25: Intervención básica en incendios forestales - 3 hores d'estudi de comportament i extinció + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "8: Atención sanitaria, múltiples víctimas y salvamento",
+            "objetivo": "Sanitària i rescats.",
+            "sesiones": [
+                {"titulo": "Sessió 33", "tareas": ["Tema 26: Prevención incendios varios - 3 hores de lectura i esquemes + 1 hora de test"]},
+                {"titulo": "Sessió 34", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 hores de zonificació i identificació de substàncies + 1 hora de test"]},
+                {"titulo": "Sessió 35", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 hores de descontaminació i protocols + 1 hora de test"]},
+                {"titulo": "Sessió 36", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores de suport vital bàsic i anatomia + 1 hora de test"]},
+                {"titulo": "Sessió 37", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores d'atenció al trauma i patologies urgents + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "9: Rescate en accidentes de tráfico, entornos urbanos e inundaciones",
+            "objetivo": "Tancament de la volta amb rescats i inundacions.",
+            "sesiones": [
+                {"titulo": "Sessió 38", "tareas": ["Tema 29: Intervención básica en incidentes de múltiples víctimas - 3 hores d'estudi de triatge i organització + 1 hora de test"]},
+                {"titulo": "Sessió 39", "tareas": ["Tema 30: Intervención básica en estructuras colapsadas - 3 hores d'apuntalaments i cerca + 1 hora de test"]},
+                {"titulo": "Sessió 40", "tareas": ["Tema 31: Intervención básica al medi natural terrestre - 3 hores de tècniques de rescat terrestre + 1 hora de test"]},
+                {"titulo": "Sessió 41", "tareas": ["Tema 32: Intervención básica en accidentes de movilidad viaria - 3 hores d'estudi d'excarceració i estabilització + 1 hora de test"]},
+                {"titulo": "Sessió 42", "tareas": ["Tema 33: Intervención básica en rescate urbano - 3 hores d'estudi de rescat en altura i espais confinats + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "10: Repàs final i tancament",
+            "objetivo": "Últims temes i consolidació de la volta.",
+            "sesiones": [
+                {"titulo": "Sessió 43", "tareas": ["Tema 34: Intervención básica en inundaciones - 3 hores d'estudi de dinàmiques de riades i rescat aquàtic + 1 hora de test"]},
+                {"titulo": "Sessió 44", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores de repàs general d'algoritmes + 1 hora de test global de sanitat"]},
+                {"titulo": "Sessió 45", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores de repàs de fórmules i càlculs aplicats + 1 hora de test global d'hidràulica"]}
+            ]
+        }
+    ]
 
-        st.session_state.plan_estudio_json = pla_local
-        st.session_state.plan_estudio_texto_raw = ""
-        st.success("¡Pla d'estudi seqüencial generat amb èxit!")
-        if 'guardar_plan_nube' in globals():
-            guardar_plan_nube()
+    # Assegurar que hi ha pla carregat a la sessió
+    if "plan_estudio_json" not in st.session_state or not st.session_state.plan_estudio_json:
+        st.session_state.plan_estudio_json = pla_por_defecto
 
-    if "plan_estudio_json" in st.session_state and st.session_state.plan_estudio_json:
-        st.markdown("---")
-        st.subheader("📋 El teu Pla d'Estudi Seqüencial")
-        if "progreso_estudio" not in st.session_state:
-            st.session_state.progreso_estudio = {}
+    if st.button("🚀 Restablir / Actualitzar Pla Estudi"):
+        st.session_state.plan_estudio_json = pla_por_defecto
+        guardar_plan_nube()
+        st.success("¡Pla restablert correctament!")
+        st.rerun()
 
-        for k, v in st.session_state.progreso_estudio.items():
-            st.session_state[k] = v
+    st.markdown("---")
+    st.subheader("📋 El teu Pla d'Estudi Seqüencial")
+    
+    if "progreso_estudio" not in st.session_state:
+        st.session_state.progreso_estudio = {}
 
-        for sem in st.session_state.plan_estudio_json:
-            with st.expander(f"Bloc {sem.get('semana')}: {sem.get('objetivo', '')}", expanded=False):
-                for s_info in sem.get('sesiones', []):
-                    sesion_titulo = s_info.get('titulo', '')
-                    st.markdown(f"**📌 {sesion_titulo}**")
-                    for t_idx, tarea in enumerate(s_info.get('tareas', [])):
-                        key_check = f"chk_sem_{sem.get('semana')}_{sesion_titulo}_{t_idx}"
-                        if key_check not in st.session_state:
-                            st.session_state[key_check] = st.session_state.progreso_estudio.get(key_check, False)
+    for sem in st.session_state.plan_estudio_json:
+        bloque_titulo = sem.get('semana', 'Bloc')
+        bloque_objetivo = sem.get('objetivo', '')
+        
+        with st.expander(f"Bloc {bloque_titulo}: {bloque_objetivo}", expanded=False):
+            sesiones = sem.get('sesiones', [])
+            if not sesiones:
+                st.info("No hi ha sessions en aquest bloc.")
+            for s_info in sesiones:
+                sesion_titulo = s_info.get('titulo', '')
+                st.markdown(f"**📌 {sesion_titulo}**")
+                for t_idx, tarea in enumerate(s_info.get('tareas', [])):
+                    key_check = f"chk_sem_{bloque_titulo}_{sesion_titulo}_{t_idx}"
+                    if key_check not in st.session_state:
+                        st.session_state[key_check] = st.session_state.progreso_estudio.get(key_check, False)
 
-                        def actualizar_checkbox(k=key_check):
-                            st.session_state.progreso_estudio[k] = st.session_state[k]
-                            if 'guardar_plan_nube' in globals():
-                                guardar_plan_nube()
+                    def actualizar_checkbox(k=key_check):
+                        st.session_state.progreso_estudio[k] = st.session_state[k]
+                        guardar_plan_nube()
 
-                        st.checkbox(tarea, key=key_check, on_change=actualizar_checkbox)
-                    st.markdown("")
-
-    elif "plan_estudio_texto_raw" in st.session_state and st.session_state.plan_estudio_texto_raw:
-        st.markdown("---")
-        st.markdown(st.session_state.plan_estudio_texto_raw)
+                    st.checkbox(tarea, key=key_check, on_change=actualizar_checkbox)
+                st.markdown("")
 # ------------------------------------------------------------------------------
 # 7. FLASHCARDS
 # ------------------------------------------------------------------------------
