@@ -801,43 +801,52 @@ elif "6." in opcion_str or "Pla" in opcion_str or "Plan" in opcion_str:
             "objetivo": "Sistemes de construcció i vehicles.",
             "sesiones": [
                 {"titulo": "Sessió 18", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores de teoria de fluids e hidrostàtica + 1 hora de test"]},
-                {"titulo": "
-# ------------------------------------------------------------------------------
-# 7. FLASHCARDS
-# ------------------------------------------------------------------------------
-elif "7." in opcion_str or "Flashcards" in opcion_str or "Targetes" in opcion_str:
-    st.header("🎴 Targetes de Memorització")
-    docs = list(st.session_state.textos_pdfs_temario.keys())
-    t1, t2 = st.tabs(["➕ Generar Flashcards", "🎴 Veure Flashcards Guardades"])
-    with t1:
-        if not docs: 
-            st.warning("Puja PDFs primer a la biblioteca.")
-        else:
-            ts = st.selectbox("Tema base:", docs)
-            nf = st.slider("Nombre de flashcards:", 3, 15, 8)
-            if st.button("Generar Flashcards"):
-                resp = generar_con_reintento(f"Genera {nf} flashcards (anvers i revers concisos) basades en: {st.session_state.textos_pdfs_temario[ts][:10000]}. Torna un JSON pur en format de llista de diccionaris amb claus 'anverso' i 'reverso'. RESPON EN CATALÀ.")
-                if resp:
-                    try:
-                        clean = resp.text.strip().replace("```json", "").replace("```", "")
-                        cards = json.loads(clean)
-                        for c in cards:
-                            c["tema"] = ts
-                            if not any(x.get("anverso") == c.get("anverso") for x in st.session_state.flashcards):
-                                st.session_state.flashcards.append(c)
-                        guardar_flashcards_disco()
-                        st.success("¡Flashcards guardades!")
-                    except Exception as e: 
-                        st.error(f"Error processant JSON: {e}")
-    with t2:
-        if not st.session_state.flashcards: 
-            st.info("No hi ha flashcards guardades.")
-        else:
-            for fc in st.session_state.flashcards:
-                with st.expander(f"[{fc.get('tema')}] {fc.get('anverso')}"):
-                    st.write(fc.get('reverso'))
-
-
+                {"titulo": "Sessió 19", "tareas": ["Tema 13: Hidráulica y Bombas - 3 hores d'hidrodinàmica i càlcul de bombes + 1 hora de test"]},
+                {"titulo": "Sessió 20", "tareas": ["Tema 14: Cartografía y Orientación - 3 hores d'estudi de mapes i escales + 1 hora de test"]},
+                {"titulo": "Sessió 21", "tareas": ["Tema 15: Construcción - 3 hores de lectura i anàlisi d'elements estructurals + 1 hora de test"]},
+                {"titulo": "Sessió 22", "tareas": ["Tema 16: Intervención básica en asistencias técnicas - 3 hores d'estudi de procediments + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "6: Protección individual, gestión operativa e intervención",
+            "objetivo": "EPIs i operativitat contra incendis.",
+            "sesiones": [
+                {"titulo": "Sessió 23", "tareas": ["Tema 17: Comunicaciones por radio - 3 hores d'estudi de protocols i xarxes + 1 hora de test"]},
+                {"titulo": "Sessió 24", "tareas": ["Tema 18: Vehículos de intervención en emergencias - 3 hores de lectura i tipologies + 1 hora de test"]},
+                {"titulo": "Sessió 25", "tareas": ["Tema 19: Conducción y mecánica - 3 hores d'estudi de mecànica i conducció d'emergència + 1 hora de test"]},
+                {"titulo": "Sessió 26", "tareas": ["Tema 20: Equipos de protección individual en emergencias - 3 hores d'estudi d'EPIs i ERA + 1 hora de test"]},
+                {"titulo": "Sessió 27", "tareas": ["Tema 21: Introducción a la gestión de emergencias y Protección Civil - 3 hores de lectura i esquemes + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "7: Incendios forestales, riesgos especiales y NRBQ",
+            "objetivo": "Incendis forestals i riscos específics.",
+            "sesiones": [
+                {"titulo": "Sessió 28", "tareas": ["Tema 22: Principios y características del Sistema de Mando - 3 hores d'anàlisi del sistema + 1 hora de test"]},
+                {"titulo": "Sessió 29", "tareas": ["Tema 23: Prevención básica de incendios - 3 hores de lectura i normativa + 1 hora de test"]},
+                {"titulo": "Sessió 30", "tareas": ["Tema 24: Intervención básica en incendios estructurales - 3 hores d'estudi tàctic i desenvolupament + 1 hora de test"]},
+                {"titulo": "Sessió 31", "tareas": ["Tema 24: Intervención básica en incendis estructurals - 3 hores de profundització e hidràulica d'incendis + 1 hora de test"]},
+                {"titulo": "Sessió 32", "tareas": ["Tema 25: Intervención básica en incendios forestales - 3 hores d'estudi de comportament i extinció + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "8: Atención sanitaria, múltiples víctimas y salvamento",
+            "objetivo": "Sanitària i rescats.",
+            "sesiones": [
+                {"titulo": "Sessió 33", "tareas": ["Tema 26: Prevención incendios varios - 3 hores de lectura i esquemes + 1 hora de test"]},
+                {"titulo": "Sessió 34", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 hores de zonificació i identificació de substàncies + 1 hora de test"]},
+                {"titulo": "Sessió 35", "tareas": ["Tema 27: Intervención básica en riesgos NRBQ - 3 hores de descontaminació i protocols + 1 hora de test"]},
+                {"titulo": "Sessió 36", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores de suport vital bàsic i anatomia + 1 hora de test"]},
+                {"titulo": "Sessió 37", "tareas": ["Tema 28: Asistencia sanitaria - 3 hores d'atenció al trauma i patologies urgents + 1 hora de test"]}
+            ]
+        },
+        {
+            "semana": "9: Rescate en accidentes de tráfico, entornos urbanos e inundaciones",
+            "objetivo": "Tancament de la volta amb rescats i inundacions.",
+            "sesiones": [
+                {"titulo": "Sessió 38", "tareas": ["Tema 29: Intervención básica en incidentes de múltiples víctimas - 3 hores d'estudi de triatge i organització + 1 hora de test"]},
+                {"titulo": "Sessió 39", "tareas": ["Tema 30: Intervención básica en estructuras colapsadas - 3 hores d'apuntalaments i cerca + 1 hora de test"]},
+                {"titulo": "Sess
 # ------------------------------------------------------------------------------
 # 8. ESQUEMES I TAULES TÈCNIQUES
 # ------------------------------------------------------------------------------
